@@ -1,0 +1,14 @@
+{
+  "name": "Espejo C",
+  "short_name": "Espejo C",
+  "description": "Tu proceso. Tu identidad. Tu proyección.",
+  "start_url": "./espejo-c-prototipo.html",
+  "display": "standalone",
+  "background_color": "#FFFCF7",
+  "theme_color": "#1E9E5A",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

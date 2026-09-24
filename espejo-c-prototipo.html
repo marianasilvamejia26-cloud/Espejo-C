@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espejo C — Prototipo</title>
+<meta name="theme-color" content="#1E9E5A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grad-start:#FFDE59;
+    --grad-end:#1E9E5A;
+    --navy:#1E9E5A;
+    --navy-pair:#FFDE59;
+    --maroon:#B33771;
+    --outline:#1B1B1F;
+    --cream:#F5F2EA;
+    --panel:#EFEBE1;
+    --line:#E6E1D3;
+    --ink:#1B1B1F;
+    --ink-soft:#7A7770;
+    --periwinkle:#7B6FEF;
+    --blue-avatar:#8ED4F5;
+    --pink-avatar:#F6B8CE;
+    --yellow-avatar:#F5E75C;
+    --white-avatar:#F3F1EA;
+    --gray-avatar:#C9C6BC;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    background:#127A45;
+    padding:40px 16px 60px;
+    color:var(--ink);
+  }
+  h1,h2,h3{font-family:'Bricolage Grotesque', sans-serif;}
+
+  .stage-label{
+    color:var(--navy);
+    font-family:'Bricolage Grotesque', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:.02em;
+    background:rgba(255,255,255,.55);
+    padding:6px 16px;
+    border-radius:999px;
+  }
+
+  .phone{
+    width:340px;
+    height:696px;
+    background:var(--outline);
+    border-radius:46px;
+    padding:12px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.25);
+    position:relative;
+  }
+  .phone::before{ /* notch */
+    content:"";
+    position:absolute;
+    top:12px; left:50%; transform:translateX(-50%);
+    width:120px; height:22px;
+    background:var(--outline);
+    border-bottom-left-radius:16px;
+    border-bottom-right-radius:16px;
+    z-index:5;
+  }
+  .screen{
+    width:100%; height:100%;
+    background:var(--cream);
+    border-radius:36px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:12px; font-weight:600; color:var(--navy);
+    padding:14px 24px 4px;
+    flex-shrink:0;
+  }
+  .content{
+    flex:1;
+    overflow-y:auto;
+    padding:6px 22px 18px;
+  }
+  .content::-webkit-scrollbar{width:0;}
+  .content.fade{ animation:fadeIn .28s ease; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
+  [onclick]{ transition:transform .1s ease; }
+  [onclick]:active{ transform:scale(.95); }
+
+  /* ---------- shared bits ---------- */
+  .back-row{ display:flex; align-items:center; gap:10px; padding:6px 0 14px; }
+  .back-btn{
+    width:32px; height:32px; border-radius:10px; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; background:#fff; cursor:pointer;
+  }
+  .eyebrow{ font-size:12px; color:var(--ink-soft); margin-bottom:2px;}
+  .btn-primary{
+    width:100%; padding:14px; border:none; border-radius:14px;
+    background:linear-gradient(135deg, var(--navy), #FF8A3D); color:#fff; font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700; font-size:15px; cursor:pointer; text-align:center;
+    box-shadow:0 5px 0 rgba(0,0,0,.12); transition:transform .1s;
+  }
+  .btn-primary:active{ transform:translateY(2px); box-shadow:0 3px 0 rgba(0,0,0,.12); }
+  .btn-secondary{
+    width:100%; padding:12px; border:1.5px solid var(--navy); border-radius:14px;
+    background:transparent; color:var(--navy); font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700; font-size:14px; cursor:pointer; text-align:center;
+  }
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px;
+    box-shadow:0 6px 18px rgba(179,55,113,.08);
+  }
+  .pill-btn{
+    flex:1; border-radius:14px; overflow:hidden; position:relative;
+    padding:14px 12px; font-size:12.5px; font-weight:700; color:#fff;
+    display:flex; flex-direction:column; align-items:flex-start; gap:6px; cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.12); transition:transform .1s;
+  }
+  .pill-btn:active{ transform:scale(.96); }
+  .pill-btn.pat-a{ background:linear-gradient(135deg,#8B5CF6,#4EA8FF); }
+  .pill-btn.pat-b{ background:linear-gradient(135deg,#FF4F81,#FF8A3D); }
+  .pill-btn::before{
+    content:''; position:absolute; top:-16px; right:-16px; width:56px; height:56px;
+    border-radius:50%; background:rgba(255,255,255,.18);
+  }
+  .pill-btn::after{
+    content:''; position:absolute; bottom:-20px; right:14px; width:34px; height:34px;
+    border-radius:8px; background:rgba(255,255,255,.14); transform:rotate(20deg);
+  }
+
+  /* ---------- onboarding ---------- */
+  .brand-title{ font-size:30px; color:var(--navy); font-weight:700; }
+  .brand-sub{ color:var(--maroon); font-weight:600; font-size:13px; margin-top:6px; }
+  .onboard-copy{ color:var(--ink-soft); font-size:13.5px; line-height:1.55; margin:20px 4px 28px; }
+
+  /* ---------- home ---------- */
+  .hello{ font-size:20px; font-weight:700; color:var(--navy); }
+  .hello-sub{ font-size:13px; color:var(--ink-soft); margin-top:2px; margin-bottom:16px;}
+  .progress-card{ display:flex; gap:16px; align-items:center; }
+  .ring{
+    width:74px; height:74px; border-radius:50%; flex-shrink:0;
+    background:conic-gradient(var(--navy) calc(var(--pct,65)*1%), var(--panel) 0);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ring-inner{ width:56px; height:56px; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .ring-inner b{font-size:15px; color:var(--navy);}
+  .ring-inner span{font-size:8.5px; color:var(--ink-soft);}
+  .stat-row{ display:flex; justify-content:space-between; font-size:12px; margin-top:6px;}
+  .stat-row b{color:var(--navy); font-size:14px;}
+  .section-title{ font-size:13px; font-weight:700; color:var(--navy); margin:18px 0 8px; }
+  .last-entry{ display:flex; align-items:center; gap:12px; }
+  .icon-chip{ width:38px; height:38px; border-radius:10px; background:var(--panel); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .quick-row{ display:flex; gap:10px; margin-top:10px;}
+
+  /* ---------- cat-item (áreas explora) ---------- */
+  .cat-item{ display:flex; gap:12px; align-items:center; padding:14px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .cat-icon{ width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0;}
+  .cat-title{ font-weight:700; color:var(--navy); font-size:14px;}
+  .cat-sub{ font-size:12px; color:var(--ink-soft); margin-top:1px;}
+
+  /* ---------- tiles tipo "pick what you love" ---------- */
+  .tile-grid{ display:flex; flex-wrap:wrap; gap:12px; }
+  .tile{ flex:0 0 calc(50% - 6px); box-sizing:border-box; border-radius:20px; padding:14px; color:#fff; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.1); transition:transform .12s; }
+  .tile:active{ transform:scale(.96); }
+  .tile-icon{ width:38px; height:38px; border-radius:11px; background:rgba(255,255,255,.28); display:flex; align-items:center; justify-content:center; margin-bottom:22px; }
+  .tile-title{ font-family:'Bricolage Grotesque'; font-weight:700; font-size:14.5px; }
+  .tile-sub{ font-size:11px; opacity:.85; margin-top:2px; }
+
+  /* ---------- pregunta ---------- */
+  .progress-bar-track{ height:6px; background:var(--panel); border-radius:99px; margin:10px 0 18px; overflow:hidden;}
+  .progress-bar-fill{ height:100%; background:var(--navy); border-radius:99px; }
+  .q-text{ font-size:18px; font-weight:700; color:var(--navy); line-height:1.4; margin-bottom:16px; }
+  textarea{
+    width:100%; min-height:110px; border:1px solid var(--line); border-radius:14px;
+    padding:12px; font-family:'Inter'; font-size:13px; resize:none; background:#fff; color:var(--ink);
+  }
+  textarea::placeholder{ color:#B7B2A6; }
+  .q-actions{ display:flex; gap:10px; margin-top:16px; }
+
+  /* ---------- registrar experiencia ---------- */
+  label{ display:block; font-size:12px; font-weight:600; color:var(--navy); margin:14px 0 6px;}
+  input[type=text], input[type=date]{
+    width:100%; border:1px solid var(--line); border-radius:12px; padding:11px 12px; font-size:13px; font-family:'Inter'; color:var(--ink);
+  }
+  .emoji-row{ display:flex; gap:8px; }
+  .emoji-btn{ flex:1; padding:10px 0; border-radius:12px; border:1px solid var(--line); background:#fff; text-align:center; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .emoji-btn.active{ border-color:var(--navy); background:var(--panel); }
+
+  /* ---------- evolución ---------- */
+  .tabs{ display:flex; gap:6px; background:var(--panel); border-radius:12px; padding:4px; margin-bottom:14px;}
+  .tab{ flex:1; text-align:center; padding:8px 0; border-radius:10px; font-size:12px; font-weight:700; color:var(--ink-soft); cursor:pointer; }
+  .tab.active{ background:#fff; color:var(--navy); }
+  .timeline-item{ display:flex; gap:12px; padding:12px 0; }
+  .dot{ width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px;}
+  .tl-date{ font-size:10.5px; color:var(--ink-soft); font-weight:600; }
+  .tl-title{ font-size:13.5px; font-weight:700; color:var(--navy); margin-top:1px;}
+
+  /* ---------- identidad ---------- */
+  .avatar{ width:76px; height:76px; border-radius:50%; background:var(--panel); border:2px solid var(--line); margin:6px auto 14px; display:flex; align-items:center; justify-content:center; font-size:30px;}
+  .id-card{ margin-bottom:12px; display:flex; justify-content:space-between; align-items:flex-start; border-left:5px solid var(--accent, var(--navy)); }
+  .id-card h4{ font-size:13px; color:var(--navy); margin-bottom:4px;}
+  .id-card p{ font-size:12.5px; color:var(--ink-soft); }
+  .link-edit{ font-size:11.5px; color:var(--maroon); font-weight:700; white-space:nowrap; margin-left:8px; }
+
+  /* ---------- insights ---------- */
+  .bars{ display:flex; align-items:flex-end; gap:8px; height:70px; margin:14px 0 4px; }
+  .bars > div{ flex:1; border-radius:6px 6px 0 0; }
+  .bar-legend{ display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-soft); margin-bottom:14px;}
+  .metric-row{ margin-top:10px; }
+  .metric-label{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;}
+  .metric-track{ height:7px; background:var(--panel); border-radius:99px; overflow:hidden;}
+  .metric-fill{ height:100%; background:var(--maroon); border-radius:99px;}
+  .quote-card{ background:var(--navy); color:#fff; border-radius:16px; padding:16px; margin-top:18px; font-size:12.5px; line-height:1.5; }
+  .quote-card b{ font-family:'Bricolage Grotesque'; }
+
+  /* ---------- bottom nav ---------- */
+  .navbar{
+    display:flex; align-items:center; justify-content:space-around;
+    padding:10px 10px 16px; border-top:1px solid var(--line); background:#fff; flex-shrink:0;
+  }
+  .nav-item{ display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; opacity:.45; padding:5px 12px; border-radius:14px; }
+  .nav-item.active{ opacity:1; background:var(--panel); }
+  .nav-item span{ font-size:9px; font-weight:600; color:var(--navy); }
+  .nav-plus{
+    width:40px; height:40px; border-radius:50%; background:var(--navy); display:flex; align-items:center; justify-content:center;
+    margin-top:-24px; box-shadow:0 6px 14px rgba(179,55,113,.35); opacity:1 !important; cursor:pointer;
+  }
+
+  .controls{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:340px;
+  }
+  .controls button{
+    font-family:'Bricolage Grotesque'; font-weight:600; font-size:12.5px; color:var(--navy);
+    background:#fff; border:1px solid rgba(179,55,113,.25); padding:8px 14px; border-radius:999px; cursor:pointer;
+  }
+  .controls button.current{ background:var(--navy); color:#fff; }
+
+  /* ---------- estilo "app real": badges, ruta, pregunta del día ---------- */
+  .badge-row{ display:flex; gap:10px; margin-bottom:16px; }
+  .badge{ display:flex; align-items:center; gap:6px; border:2.5px solid var(--outline); border-radius:999px; padding:7px 14px; font-family:'Bricolage Grotesque'; font-weight:600; font-size:14px; background:#fff; box-shadow:0 3px 0 rgba(0,0,0,.1); }
+  .badge.flame{ background:linear-gradient(135deg,#FFE1B0,#FFB25C); }
+  .badge.star{ background:linear-gradient(135deg,#FFF3C4,#FFD65C); }
+  .avatar-wrap-outer{ position:relative; width:118px; height:118px; margin:6px auto 12px; }
+  .sparkle{ position:absolute; font-size:16px; animation:twinkle 1.8s ease-in-out infinite; }
+  .sparkle.s1{ top:-4px; left:2px; animation-delay:0s; }
+  .sparkle.s2{ top:6px; right:-8px; animation-delay:.5s; font-size:12px; }
+  .sparkle.s3{ bottom:2px; left:-10px; animation-delay:1s; font-size:13px; }
+  @keyframes twinkle{ 0%,100%{opacity:.3; transform:scale(.8);} 50%{opacity:1; transform:scale(1.15);} }
+  .avatar-big-wrap{ width:110px; height:110px; border-radius:50%; border:3px solid var(--outline); background:linear-gradient(160deg,#FFE9C7,#FFD1DC); display:flex; align-items:center; justify-content:center; margin:0 auto; animation:floaty 3s ease-in-out infinite; box-shadow:0 6px 0 rgba(0,0,0,.1); }
+  @keyframes floaty{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);} }
+  .greeting-title{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:21px; color:var(--ink); text-align:center; }
+  .greeting-date{ text-align:center; color:var(--ink-soft); font-size:12.5px; margin-top:2px; margin-bottom:14px; }
+  .brand-big{ font-family:'Bricolage Grotesque'; font-weight:700; font-size:26px; text-align:center; color:var(--navy); margin-top:18px; }
+  .brand-tag{ text-align:center; color:var(--ink-soft); font-size:12.5px; margin:6px 6px 18px; line-height:1.5; }
+  .pregunta-dia-card{ border:2.5px solid var(--outline); border-radius:20px; background:linear-gradient(135deg,var(--grad-start),var(--grad-end)); padding:16px; margin-bottom:24px; box-shadow:0 6px 0 rgba(0,0,0,.08); }
+  .pregunta-dia-label{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:11px; letter-spacing:.04em; color:#fff; opacity:.85; margin-bottom:6px; }
+  .pregunta-dia-text{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:16px; color:#fff; line-height:1.35; margin-bottom:10px; }
+  .pregunta-dia-link{ font-family:'Bricolage Grotesque'; font-weight:700; color:#fff; font-size:14px; cursor:pointer; }
+  .ruta-title{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:15px; color:var(--ink); margin:2px 0 18px; text-align:center; }
+  .ruta-path{ display:flex; flex-direction:column; align-items:center; }
+  .ruta-node-wrap{ display:flex; flex-direction:column; align-items:center; }
+  .ruta-node{ width:64px; height:64px; border-radius:18px; border:3px solid var(--outline); display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.15); transition:transform .12s; }
+  .ruta-node:active{ transform:scale(.9) translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.15); }
+  .ruta-label{ margin-top:8px; border:2px solid var(--outline); border-radius:999px; padding:4px 13px; font-family:'Bricolage Grotesque'; font-weight:600; font-size:12px; background:#fff; }
+  .ruta-connector{ width:4px; height:30px; background:repeating-linear-gradient(to bottom, var(--outline) 0 6px, transparent 6px 12px); margin:2px 0; }
+  .ruta-node-wrap{ position:relative; }
+  .new-tag{ position:absolute; top:-8px; right:-10px; background:#FF4F81; color:#fff; font-family:'Bricolage Grotesque'; font-weight:700; font-size:9px; padding:2px 6px; border-radius:999px; border:1.5px solid var(--outline); }
+
+  /* ---------- globo de conclusión junto al avatar ---------- */
+  .avatar-bubble{
+    background:#fff; border:2px solid var(--outline); border-radius:16px; padding:8px 12px;
+    font-family:'Bricolage Grotesque'; font-weight:600; font-size:11.5px; color:var(--ink); text-align:center;
+    max-width:170px; margin:8px auto 4px; position:relative; box-shadow:0 3px 0 rgba(0,0,0,.08);
+  }
+  .avatar-bubble::after{
+    content:''; position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+    border-width:0 7px 7px 7px; border-style:solid; border-color:transparent transparent var(--outline) transparent;
+  }
+
+  /* ---------- confeti ---------- */
+  .confetti-piece{
+    position:fixed; width:8px; height:8px; border-radius:2px; pointer-events:none; z-index:999;
+    animation:confettiFly .9s ease-out forwards;
+  }
+  @keyframes confettiFly{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
+    100%{ transform:translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity:0; }
+  }
+
+  /* ---------- onboarding tipo Duolingo (fondo de color completo) ---------- */
+  .content.full-bleed{ padding:0; }
+  .onboard-full{
+    min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    padding:34px 26px 26px; background:linear-gradient(160deg, var(--navy), var(--navy-pair)); color:#fff; text-align:center; box-sizing:border-box;
+  }
+  .onboard-top{ display:flex; flex-direction:column; align-items:center; }
+  .onboard-brand{ font-family:'Bricolage Grotesque'; font-weight:700; font-size:24px; letter-spacing:.01em; }
+  .onboard-illustration-wrap{ margin:18px 0 10px; }
+  .onboard-step-title{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:19px; margin-top:6px; }
+  .onboard-step-sub{ font-size:12.5px; opacity:.9; margin:6px 10px 4px; line-height:1.5; }
+  .onboard-swatch-row{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:14px 0; }
+  .onboard-swatch{ width:38px; height:38px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .btn-onboard-white{
+    width:100%; padding:14px; border:none; border-radius:14px; background:#fff; color:var(--navy);
+    font-family:'Bricolage Grotesque'; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.15); transition:transform .1s;
+  }
+  .btn-onboard-white:active{ transform:translateY(2px); box-shadow:0 3px 0 rgba(0,0,0,.15); }
+  .btn-onboard-ghost{ background:transparent; border:none; color:#fff; opacity:.85; font-family:'Bricolage Grotesque'; font-weight:600; font-size:13px; cursor:pointer; margin-top:10px; }
+  .type-toggle-onboard{ display:flex; gap:8px; background:rgba(255,255,255,.18); border-radius:14px; padding:4px; margin:14px 0; width:100%; }
+  .type-toggle-onboard div{ flex:1; text-align:center; padding:9px 0; border-radius:11px; font-family:'Bricolage Grotesque'; font-weight:600; font-size:13px; cursor:pointer; color:#fff; }
+  .type-toggle-onboard div.active{ background:#fff; color:var(--navy); }
+  .gallery-grid{ display:flex; flex-wrap:wrap; gap:10px; width:100%; }
+  .gallery-item{ flex:0 0 30%; box-sizing:border-box; background:rgba(255,255,255,.14); border:2px solid transparent; border-radius:16px; padding:6px 2px 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; }
+  .gallery-item.selected{ background:#fff; border-color:#fff; }
+
+  /* ---------- personalizar avatar (fondo claro, estilo referencia) ---------- */
+  .avatar-setup-light{
+    min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    padding:30px 22px 26px; background:var(--cream); box-sizing:border-box;
+  }
+  .type-toggle-light{ display:inline-flex; gap:6px; background:var(--panel); border-radius:14px; padding:4px; margin-bottom:20px; }
+  .type-toggle-light div{ padding:8px 20px; border-radius:11px; font-family:'Bricolage Grotesque'; font-weight:600; font-size:13px; cursor:pointer; color:var(--ink-soft); }
+  .type-toggle-light div.active{ background:var(--outline); color:#fff; }
+  .setup-title{ font-family:'Bricolage Grotesque'; font-weight:800; font-size:27px; color:var(--outline); line-height:1.15; margin-bottom:6px; }
+  .big-avatar-preview{ margin:10px 0 24px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.12)); }
+  .preset-row{ display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .preset-item{ display:flex; flex-direction:column; align-items:center; cursor:pointer; gap:6px; }
+  .preset-circle{ width:52px; height:52px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; border:2.5px solid transparent; background:var(--panel); transition:transform .1s; }
+  .preset-circle.selected{ border-color:var(--outline); }
+  .preset-item:active .preset-circle{ transform:scale(.92); }
+  .preset-name{ font-size:10.5px; font-weight:600; color:var(--ink-soft); font-family:'Bricolage Grotesque'; }
+  .btn-dark-pill{ width:100%; padding:15px; border:none; border-radius:16px; background:var(--outline); color:#fff; font-family:'Bricolage Grotesque'; font-weight:700; font-size:15px; cursor:pointer; }
+  .btn-dark-pill:active{ opacity:.85; }
+  .color-dot-row{ display:flex; justify-content:center; gap:10px; margin-bottom:18px; }
+  .color-dot{ width:26px; height:26px; border-radius:50%; cursor:pointer; border:3px solid transparent; }
+  .color-dot.selected{ border-color:var(--outline); }
+  .home-hero{
+    background:linear-gradient(135deg, var(--navy), var(--navy-pair)); margin:-6px -22px 0 -22px; padding:22px 22px 26px;
+    border-radius:0 0 32px 32px; box-shadow:0 8px 20px rgba(0,0,0,.12);
+  }
+
+  /* ---------- perfil: blob cards y barras pill (estilo referencia) ---------- */
+  .profile-name{ font-family:'Bricolage Grotesque'; font-weight:800; font-size:21px; color:var(--outline); margin-top:8px; cursor:pointer; }
+  .blob-row{ display:flex; gap:10px; }
+  .blob-card{ flex:1; position:relative; border-radius:20px; padding:12px; color:#fff; overflow:hidden; height:112px; box-shadow:0 5px 0 rgba(0,0,0,.1); cursor:pointer; }
+  .blob-refresh{ width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.25); display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .blob-mascot{ position:absolute; bottom:-22px; right:-14px; }
+  .blob-value{ font-family:'Bricolage Grotesque'; font-weight:800; font-size:24px; margin-top:12px; }
+  .blob-label{ font-size:10.5px; opacity:.9; line-height:1.3; margin-top:2px; }
+  .pill-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .pill-row-label{ width:80px; flex-shrink:0; font-size:10.5px; font-weight:600; color:var(--ink); font-family:'Bricolage Grotesque'; line-height:1.2; }
+  .pill-track{ flex:1; height:24px; background:var(--panel); border-radius:999px; overflow:hidden; }
+  .pill-fill{ height:100%; border-radius:999px; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; min-width:34px; box-sizing:border-box; }
+  .pill-fill span{ font-size:10px; font-weight:700; color:#fff; font-family:'Bricolage Grotesque'; }
+
+  /* ---------- hero de bienvenida (limpio, en pasos) ---------- */
+  .hero-clean{
+    min-height:100%; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;
+    padding:38px 26px 26px; background:linear-gradient(180deg, #FFDE59 0%, #6EE7B7 55%, #1E9E5A 100%);
+  }
+  .hero-clean-top{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .hero-clean-brand{ font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:20px; color:#1B1B1F; }
+  .hero-steps-list{ background:#fff; border-radius:24px; padding:22px 20px; box-shadow:0 8px 0 rgba(0,0,0,.1); margin:26px 0; }
+  .hero-step-row{ display:flex; align-items:flex-start; gap:14px; }
+  .hero-step-num{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0; color:#fff; font-family:'Bricolage Grotesque';
+    font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
+  }
+  .hero-step-title{ font-family:'Bricolage Grotesque', sans-serif; font-weight:700; font-size:15.5px; color:#1B1B1F; }
+  .hero-step-desc{ font-size:12px; color:#6B6862; margin-top:2px; line-height:1.4; }
+  .hero-step-connector{ width:2px; height:18px; background:var(--line); margin:2px 0 2px 17px; }
+  .hero-grid{ display:flex; flex-wrap:wrap; gap:14px 10px; margin:28px 0; }
+  .hero-grid-card{ flex:0 0 calc(50% - 5px); box-sizing:border-box; background:#fff; border:3px solid #1B1B1F; border-radius:18px; padding:14px 12px; box-shadow:0 5px 0 rgba(0,0,0,.14); }
+  .hero-tag-cloud{ display:flex; flex-direction:column; align-items:center; gap:18px; margin:26px 0; }
+  .hero-tag-row{ display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center; justify-content:center; }
+  .hero-icon-chip{ width:56px; height:56px; border-radius:16px; background:#fff; border:2.5px solid #1B1B1F; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 0 rgba(0,0,0,.12); }
+  .hero-tag{ border:2.5px solid #1B1B1F; border-radius:999px; padding:8px 13px; font-family:'Bricolage Grotesque'; font-weight:800; font-size:11px; box-shadow:0 4px 0 rgba(0,0,0,.14); white-space:nowrap; }
+
+  /* ---------- hero de bienvenida (collage de stickers) ---------- */
+  .hero-full{
+    min-height:100%; position:relative; overflow:hidden; box-sizing:border-box;
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:0 22px 30px; background:linear-gradient(165deg, #FFF3B0 0%, #FFE59A 32%, #CDEEC8 68%, #8FD3A0 100%);
+  }
+  .sticker{ position:absolute; filter:drop-shadow(0 3px 4px rgba(0,0,0,.18)); }
+  .tag-sticker{
+    border:2.5px solid #1B1B1F; border-radius:8px; padding:5px 9px; font-family:'Bricolage Grotesque';
+    font-weight:700; font-size:10.5px; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.15);
+  }
+  .sticker-1{ top:56px; left:16px; transform:rotate(-14deg); background:#fff; border:2.5px solid #1B1B1F; border-radius:12px; padding:6px; }
+  .sticker-2{ top:48px; right:10px; transform:rotate(12deg); }
+  .sticker-3{ top:132px; left:16px; transform:rotate(-8deg); }
+  .sticker-4{ top:120px; right:2px; transform:rotate(9deg); }
+  .sticker-5{ top:300px; left:8px; transform:rotate(16deg); }
+  .sticker-6{ top:196px; right:14px; transform:rotate(-6deg); }
+  .hero-center{ flex:1; display:flex; align-items:center; justify-content:center; padding-top:100px; }
+  .hero-headline{ font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:26px; line-height:1.25; color:#1B1B1F; text-align:center; background:rgba(255,255,255,.55); border-radius:20px; padding:14px 10px; }
+  .hero-legal{ font-size:10.5px; color:#33361F; text-align:center; line-height:1.5; margin-bottom:14px; opacity:.85; }
+
+  /* ---------- hero animado (personaje que se transforma) ---------- */
+  .hero-video{
+    min-height:100%; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:34px 26px 30px; background:linear-gradient(165deg, #FFF3B0 0%, #FFE59A 32%, #CDEEC8 68%, #8FD3A0 100%);
+  }
+  .morph-stage{ position:relative; width:130px; height:130px; margin-bottom:18px; }
+  .morph-char{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; animation: morphCycle 8s infinite;
+    filter:drop-shadow(0 6px 8px rgba(0,0,0,.15));
+  }
+  .morph-char.m1{ animation-delay:0s; color:#1E9E5A; }
+  .morph-char.m2{ animation-delay:2s; color:#FF4F81; }
+  .morph-char.m3{ animation-delay:4s; color:#4EA8FF; }
+  .morph-char.m4{ animation-delay:6s; color:#8B5CF6; }
+  @keyframes morphCycle{
+    0%{ opacity:0; transform:scale(.75) rotate(-10deg); }
+    4%{ opacity:1; transform:scale(1) rotate(0deg); }
+    21%{ opacity:1; transform:scale(1) rotate(0deg); }
+    25%{ opacity:0; transform:scale(.75) rotate(10deg); }
+    100%{ opacity:0; }
+  }
+  .hero-video-brand{ font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:28px; color:#1B1B1F; }
+  .hero-video-tag{ font-size:12.5px; color:#33361F; text-align:center; margin-top:6px; opacity:.85; margin-bottom:30px; }
+  .hero-bottom{ position:relative; z-index:2; }
+  .hero-link{ text-align:center; font-family:'Bricolage Grotesque'; font-weight:600; font-size:13px; color:#1B1B1F; margin-top:10px; cursor:pointer; }
+
+  /* ---------- inicio tipo poster (personajes + botones circulares) ---------- */
+  .poster-hero{
+    position:relative; overflow:hidden; min-height:430px;
+    margin:-6px -22px 0 -22px; padding:0; background:linear-gradient(160deg, var(--navy), var(--navy-pair));
+    border-radius:0 0 32px 32px; box-shadow:0 8px 20px rgba(0,0,0,.15);
+  }
+  .poster-char{ position:absolute; filter:drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
+  .poster-char-tl{ top:-14px; left:-18px; transform:rotate(-10deg); }
+  .poster-char-tr{ top:-10px; right:-16px; transform:rotate(8deg); }
+  .poster-char-bl{ bottom:-6px; left:-14px; transform:rotate(8deg); }
+  .poster-char-br{ bottom:-10px; right:-16px; transform:rotate(-8deg); }
+  .poster-circle{
+    position:absolute; width:84px; height:84px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    text-align:center; font-family:'Bricolage Grotesque'; font-weight:800; font-size:10.5px; color:#fff; letter-spacing:.02em;
+    cursor:pointer; line-height:1.25; padding:6px; box-sizing:border-box; border:2.5px solid rgba(255,255,255,.5);
+    box-shadow:0 4px 0 rgba(0,0,0,.12); transition:transform .12s;
+  }
+  .poster-circle:active{ transform:scale(.93); }
+  .pc-1{ top:58px; left:24px; }
+  .pc-2{ top:66px; right:18px; }
+  .pc-3{ bottom:92px; left:12px; }
+  .pc-4{ bottom:98px; right:14px; }
+  .pc-5{ bottom:16px; left:50%; margin-left:-42px; }
+  .poster-title-block{ position:relative; z-index:3; text-align:center; padding-top:180px; pointer-events:none; }
+  .poster-title{ font-family:'Bricolage Grotesque'; font-weight:800; font-size:27px; color:#fff; }
+  .poster-subtitle{ font-size:10px; font-weight:700; letter-spacing:.06em; color:rgba(255,255,255,.9); margin-top:4px; }
+  .poster-credit{ font-size:10.5px; color:rgba(255,255,255,.75); margin-top:10px; }
+
+  /* ---------- áreas de la comunicación (tarjetas expandibles) ---------- */
+  .area-card{
+    background:#fff; border:1.5px solid var(--line); border-left:5px solid var(--accent);
+    border-radius:16px; padding:14px; margin-bottom:10px; cursor:pointer; transition:box-shadow .15s;
+  }
+  .area-card.open{ box-shadow:0 4px 14px rgba(0,0,0,.08); }
+  .area-card-head{ display:flex; justify-content:space-between; align-items:center; }
+  .area-card-head h4{ font-size:14px; color:var(--ink); font-family:'Bricolage Grotesque'; font-weight:700; }
+  .area-chevron{ font-size:16px; font-weight:700; color:var(--accent); width:22px; height:22px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .area-desc{ font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .area-example{ margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+  .area-example-label{ font-size:10px; font-weight:700; letter-spacing:.04em; color:var(--accent); margin-bottom:5px; }
+  .area-example p{ font-size:12.5px; color:var(--ink); line-height:1.5; margin-bottom:10px; }
+  .area-steps{ display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
+  .area-step{ background:var(--panel); border-radius:999px; padding:5px 10px; font-size:10.5px; font-weight:600; color:var(--ink); }
+  .area-step-arrow{ color:var(--ink-soft); font-size:12px; }
+  .area-textarea{ width:100%; min-height:70px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font-family:'Inter'; font-size:12.5px; color:var(--ink); resize:none; background:#fff; }
+  .area-practice-actions{ display:flex; gap:8px; margin-top:10px; }
+  .area-btn-small{ width:auto; flex:1; padding:9px 10px; font-size:11.5px; }
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span>●●●●</span>
+      </div>
+      <div class="content" id="content"></div>
+      <div class="navbar" id="navbar"></div>
+    </div>
+  </div>
+
+<script>
+// ---------------- SVG icons (feather-style) ----------------
+const icons = {
+  home: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/><path d="M5 10v10a1 1 0 0 0 1 1h3M19 10v10a1 1 0 0 1-1 1h-3"/></svg>`,
+  search: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>`,
+  plus: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  chart: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12.5" y="8" width="3" height="10"/><rect x="18" y="5" width="3" height="13"/></svg>`,
+  user: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>`,
+  back: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>`,
+  gear: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--maroon)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+};
+
+// ---------------- íconos ilustrados (reemplazan emojis) ----------------
+const illus = {
+  identidad: (c,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="10" rx="6.5" ry="8"/><path d="M9 9.5c.6-.8 1.8-1.2 3-1.2s2.4.4 3 1.2M9.5 12.5c.7.6 1.6.9 2.5.9s1.8-.3 2.5-.9"/><line x1="12" y1="18" x2="12" y2="21.5"/><line x1="9" y1="21.5" x2="15" y2="21.5"/></svg>`,
+  comunicacion: (c,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-4 4V5z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12.5" x2="13" y2="12.5"/></svg>`,
+  profesion: (c,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="3" y1="13.5" x2="21" y2="13.5"/><rect x="10.3" y="12.2" width="3.4" height="2.6" rx=".5"/></svg>`,
+  proyeccion: (c,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${c}" stroke="${c}" stroke-width="1"><path d="M12 2.5l2.9 6 6.6.7-4.9 4.5 1.4 6.5L12 16.9l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7L12 2.5z" stroke-linejoin="round"/></svg>`,
+  areas: (c,s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="14.5,9.5 12.8,12.8 9.5,14.5 11.2,11.2" fill="${c}" stroke="none"/></svg>`,
+  flame: (c,s=16)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${c}"><path d="M12.5 2.3c1 3.3-3.2 5.1-3.2 9.2a4.7 4.7 0 0 0 9.4.4c.2-2.3-1-3.8-2-4.9.4 1.7-.4 2.8-1.2 3.1-.2-3.2-1.3-4.9-3-7.8z"/></svg>`,
+  book: (c,s=16)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h6.5v15H5a1 1 0 0 1-1-1v-14z"/><path d="M20 4.5h-6.5v15H19a1 1 0 0 0 1-1v-14z"/></svg>`,
+  backpack: (c,s=16)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="14" height="12.5" rx="3"/><path d="M8.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/><rect x="9.5" y="13" width="5" height="3.5" rx=".8"/></svg>`,
+  idea: (c,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6.2 6.2 0 0 0-3.2 11.5c.6.4 1 1.1 1 1.8V17h4.4v-.7c0-.7.4-1.4 1-1.8A6.2 6.2 0 0 0 12 3z"/></svg>`,
+  folder: (c,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>`,
+  sparkle: (c,s=14)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${c}"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z"/></svg>`,
+  mirror: (c,s=64)=>`<svg width="${s}" height="${s}" viewBox="0 0 100 100" fill="none"><ellipse cx="50" cy="42" rx="30" ry="36" fill="#fff" stroke="${c}" stroke-width="4"/><ellipse cx="50" cy="42" rx="23" ry="29" fill="none" stroke="${c}" stroke-width="1.5" opacity=".4"/><line x1="50" y1="78" x2="50" y2="92" stroke="${c}" stroke-width="4"/><line x1="38" y1="92" x2="62" y2="92" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="42" cy="38" r="3" fill="${c}"/><circle cx="58" cy="38" r="3" fill="${c}"/><path d="M40,52 Q50,60 60,52" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`,
+  mascot: (fill,s=90)=>`<svg width="${s}" height="${s}" viewBox="0 0 100 100">
+    <path d="M50,6 C68,6 82,12 88,28 C94,44 92,62 82,76 C74,88 60,94 50,94 C40,94 26,88 18,76 C8,62 6,44 12,28 C18,12 32,6 50,6 Z" fill="${fill}"/>
+    <circle cx="35" cy="46" r="13" fill="#fff"/><circle cx="65" cy="46" r="13" fill="#fff"/>
+    <circle cx="36.5" cy="47" r="6.5" fill="#25262B"/><circle cx="66.5" cy="47" r="6.5" fill="#25262B"/>
+    <circle cx="34" cy="44.5" r="2" fill="#fff"/><circle cx="64" cy="44.5" r="2" fill="#fff"/>
+    <path d="M40,64 Q50,72 60,64" stroke="#25262B" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg>`,
+};
+function moodIcon(level, active){
+  const mouths = ['M8,16.5 Q12,11.5 16,16.5','M8,15.5 Q12,13 16,15.5','M8,14.5 L16,14.5','M8,13 Q12,16.5 16,13','M7,12 Q12,18.5 17,12'];
+  const c = active ? '#fff' : 'var(--outline)';
+  return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="${c}" stroke-width="2"/><circle cx="8.5" cy="10" r="1.3" fill="${c}"/><circle cx="15.5" cy="10" r="1.3" fill="${c}"/><path d="${mouths[level]}" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+}
+
+// ---------------- personalización: tema y avatar ----------------
+let theme = '#1E9E5A';
+const themeColors = [
+  {name:'Verde', hex:'#1E9E5A', pair:'#FFDE59'}, {name:'Coral', hex:'#FF4F81', pair:'#FF8A3D'}, {name:'Mandarina', hex:'#FF8A3D', pair:'#FFC93C'},
+  {name:'Menta', hex:'#2EC4B6', pair:'#4EA8FF'}, {name:'Uva', hex:'#8B5CF6', pair:'#FF4F81'}, {name:'Cielo', hex:'#4EA8FF', pair:'#8B5CF6'},
+  {name:'Limón', hex:'#FFC93C', pair:'#FF8A3D'},
+];
+const skinTones = ['#FDE0C7','#F1C6A0','#D9A066','#A9714A','#6B4226'];
+const hairColors = ['#1B1B1F','#5A3825','#8B5A2B','#D9AA55','#8B8B8B'];
+const hairStyles = ['corto','largo','rizado','coleta'];
+let avatarState = { type:'humano', skin: skinTones[1], hair: hairColors[0], style: 'corto', lentes:false, animalKind:'zorro', mascotKind:'trino', mascotColor: '#FFDE59' };
+const humanPresets = [
+  {skin:skinTones[0], hair:hairColors[0], style:'corto', lentes:false},
+  {skin:skinTones[1], hair:hairColors[2], style:'largo', lentes:true},
+  {skin:skinTones[2], hair:hairColors[0], style:'rizado', lentes:false},
+  {skin:skinTones[3], hair:hairColors[3], style:'coleta', lentes:false},
+  {skin:skinTones[4], hair:hairColors[4], style:'corto', lentes:true},
+];
+function presetMatches(p){
+  return avatarState.type==='humano' && ['skin','hair','style','lentes'].every(k=>avatarState[k]===p[k]);
+}
+function setAvatarPreset(i){
+  avatarState = Object.assign({}, avatarState, humanPresets[i], {type:'humano'});
+  render('avatarSetup');
+}
+
+let personalizarTab = 'tema';
+
+function setTheme(hex){
+  theme = hex;
+  document.documentElement.style.setProperty('--navy', hex);
+  const found = themeColors.find(c=>c.hex===hex);
+  document.documentElement.style.setProperty('--navy-pair', found ? found.pair : hex);
+  render(currentScreen);
+}
+function setAvatar(field, value){ avatarState[field] = value; render(currentScreen); }
+function toggleAvatar(field){ avatarState[field] = !avatarState[field]; render(currentScreen); }
+
+function headMarkup(state){
+  let hairShapes = '';
+  if(state.style === 'corto'){
+    hairShapes = `<circle cx="50" cy="34" r="39" fill="${state.hair}"/>`;
+  } else if(state.style === 'largo'){
+    hairShapes = `<circle cx="50" cy="34" r="39" fill="${state.hair}"/>
+      <path d="M13,44 Q11,72 18,92 Q24,76 22,46 Z" fill="${state.hair}"/>
+      <path d="M87,44 Q89,72 82,92 Q76,76 78,46 Z" fill="${state.hair}"/>`;
+  } else if(state.style === 'rizado'){
+    hairShapes = `<circle cx="50" cy="36" r="35" fill="${state.hair}"/>` +
+      [[16,42],[22,22],[35,10],[50,6],[65,10],[78,22],[84,42]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="9" fill="${state.hair}"/>`).join('');
+  } else { // coleta
+    hairShapes = `<circle cx="50" cy="34" r="39" fill="${state.hair}"/>
+      <path d="M84,38 Q100,46 96,66 Q92,78 82,74 Q90,58 82,42 Z" fill="${state.hair}"/>`;
+  }
+  const glasses = state.lentes ? `
+    <ellipse cx="35" cy="57" rx="12.5" ry="10" fill="none" stroke="#1B1B1F" stroke-width="2"/>
+    <ellipse cx="65" cy="57" rx="12.5" ry="10" fill="none" stroke="#1B1B1F" stroke-width="2"/>
+    <path d="M47,55 Q50,52 53,55" stroke="#1B1B1F" stroke-width="2" fill="none"/>
+    <path d="M22.5,54 L15,50" stroke="#1B1B1F" stroke-width="2" stroke-linecap="round"/>
+    <path d="M77.5,54 L85,50" stroke="#1B1B1F" stroke-width="2" stroke-linecap="round"/>` : '';
+  return `
+    ${hairShapes}
+    <path d="M50,26 C68,26 79,40 79,58 C79,78 66,92 50,93 C34,92 21,78 21,58 C21,40 32,26 50,26 Z" fill="${state.skin}"/>
+    <ellipse cx="37" cy="47" rx="13" ry="8" fill="#ffffff" opacity="0.12"/>
+    <path d="M27,50 Q34,45.5 41,48.5" stroke="#5A4632" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
+    <path d="M59,48.5 Q66,45.5 73,50" stroke="#5A4632" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>
+    <ellipse cx="35" cy="57" rx="4.2" ry="5" fill="#3A2A1E"/>
+    <circle cx="36.3" cy="55" r="1.3" fill="#fff"/>
+    <ellipse cx="65" cy="57" rx="4.2" ry="5" fill="#3A2A1E"/>
+    <circle cx="66.3" cy="55" r="1.3" fill="#fff"/>
+    <path d="M50,60 Q52.5,65.5 50,69" stroke="#1B1B1F" stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".3"/>
+    <ellipse cx="29" cy="68" rx="5.5" ry="3.5" fill="#FF8FAE" opacity=".4"/>
+    <ellipse cx="71" cy="68" rx="5.5" ry="3.5" fill="#FF8FAE" opacity=".4"/>
+    <path d="M40,75 Q50,81 60,75 Q56,80 50,80.5 Q44,80 40,75 Z" fill="#C4576F" opacity=".85"/>
+    ${glasses}`;
+}
+
+function renderAvatarHead(state, size){
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">${headMarkup(state)}</svg>`;
+}
+
+function renderAvatarFull(state, size){
+  const h = Math.round(size*1.34);
+  return `<svg viewBox="0 0 100 134" width="${size}" height="${h}">
+    <ellipse cx="50" cy="128" rx="34" ry="8" fill="rgba(0,0,0,.08)"/>
+    <path d="M14,132 Q16,90 50,86 Q84,90 86,132 Z" fill="var(--navy)"/>
+    <path d="M40,90 Q50,98 60,90" stroke="#fff" stroke-width="2" fill="none" opacity=".35"/>
+    <rect x="43" y="80" width="14" height="18" fill="${state.skin}"/>
+    ${headMarkup(state)}
+  </svg>`;
+}
+
+// ---------------- avatares tipo animal ----------------
+const animalInfo = {
+  zorro:  { name:'Zorro',  fur:'#E8792F', dark:'#B85A1D', patch:'#FFF6EC' },
+  gato:   { name:'Gato',   fur:'#B7A6C9', dark:'#8E7BA6', patch:'#F3ECFA' },
+  oso:    { name:'Oso',    fur:'#9C6B3E', dark:'#7A4F2A', patch:'#D9B48C' },
+  panda:  { name:'Panda',  fur:'#FAFAF7', dark:'#2B2B2E', patch:'#FAFAF7' },
+  conejo: { name:'Conejo', fur:'#E9E1D6', dark:'#C9BBA8', patch:'#FFC9D9' },
+};
+
+function animalEars(kind, c){
+  if(kind === 'zorro') return `
+    <polygon points="18,32 30,6 42,34" fill="${c.fur}"/><polygon points="24,28 30,14 35,31" fill="${c.dark}"/>
+    <polygon points="82,32 70,6 58,34" fill="${c.fur}"/><polygon points="76,28 70,14 65,31" fill="${c.dark}"/>`;
+  if(kind === 'gato') return `
+    <polygon points="20,30 30,6 38,32" fill="${c.fur}"/><polygon points="24,27 30,15 33,30" fill="${c.patch}"/>
+    <polygon points="80,30 70,6 62,32" fill="${c.fur}"/><polygon points="76,27 70,15 67,30" fill="${c.patch}"/>`;
+  if(kind === 'oso') return `
+    <circle cx="21" cy="24" r="12" fill="${c.fur}"/><circle cx="21" cy="24" r="6" fill="${c.dark}"/>
+    <circle cx="79" cy="24" r="12" fill="${c.fur}"/><circle cx="79" cy="24" r="6" fill="${c.dark}"/>`;
+  if(kind === 'panda') return `
+    <circle cx="21" cy="23" r="12" fill="${c.dark}"/><circle cx="79" cy="23" r="12" fill="${c.dark}"/>`;
+  if(kind === 'conejo') return `
+    <ellipse cx="33" cy="6" rx="8.5" ry="30" fill="${c.fur}"/><ellipse cx="33" cy="10" rx="4.5" ry="21" fill="${c.patch}"/>
+    <ellipse cx="67" cy="6" rx="8.5" ry="30" fill="${c.fur}"/><ellipse cx="67" cy="10" rx="4.5" ry="21" fill="${c.patch}"/>`;
+  return '';
+}
+
+function animalFaceMarkup(kind){
+  const c = animalInfo[kind];
+  const earsBack = ['zorro','gato','conejo'].includes(kind) ? '' : animalEars(kind, c);
+  const earsFront = ['zorro','gato','conejo'].includes(kind) ? animalEars(kind, c) : '';
+  const eyePatches = kind === 'panda' ? `<ellipse cx="37" cy="53" rx="9.5" ry="13" fill="${c.dark}"/><ellipse cx="63" cy="53" rx="9.5" ry="13" fill="${c.dark}"/>` : '';
+  const muzzle = (kind === 'zorro' || kind === 'oso') ? `<ellipse cx="50" cy="66" rx="15" ry="11" fill="${c.patch}"/>` : '';
+  const whiskers = kind === 'gato' ? `
+    <line x1="14" y1="60" x2="30" y2="58" stroke="${c.dark}" stroke-width="1.3"/><line x1="14" y1="66" x2="30" y2="66" stroke="${c.dark}" stroke-width="1.3"/>
+    <line x1="86" y1="60" x2="70" y2="58" stroke="${c.dark}" stroke-width="1.3"/><line x1="86" y1="66" x2="70" y2="66" stroke="${c.dark}" stroke-width="1.3"/>` : '';
+  const nose = kind === 'conejo'
+    ? `<ellipse cx="50" cy="65" rx="3.5" ry="2.5" fill="#E88BA6"/><line x1="50" y1="68" x2="50" y2="71" stroke="${c.dark}" stroke-width="1.2"/><path d="M44,72 Q50,77 56,72" stroke="${c.dark}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="50" cy="63" rx="4.5" ry="3.2" fill="${c.dark}"/><path d="M50,66 L50,69" stroke="${c.dark}" stroke-width="1.4"/><path d="M42,72 Q50,78 58,72" stroke="${c.dark}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  const teeth = kind === 'conejo' ? `<rect x="46.5" y="72" width="3" height="5" fill="#fff" stroke="${c.dark}" stroke-width=".6"/><rect x="50.5" y="72" width="3" height="5" fill="#fff" stroke="${c.dark}" stroke-width=".6"/>` : '';
+  return `
+    ${earsBack}
+    <circle cx="50" cy="58" r="36" fill="${c.fur}"/>
+    ${eyePatches}
+    ${muzzle}
+    <ellipse cx="37" cy="54" rx="5" ry="5" fill="${kind==='panda' ? '#fff' : '#3D2645'}"/><circle cx="37" cy="54" r="2.4" fill="#2B2B2E"/><circle cx="38.4" cy="52.6" r="1" fill="#fff"/>
+    <ellipse cx="63" cy="54" rx="5" ry="5" fill="${kind==='panda' ? '#fff' : '#3D2645'}"/><circle cx="63" cy="54" r="2.4" fill="#2B2B2E"/><circle cx="64.4" cy="52.6" r="1" fill="#fff"/>
+    ${nose}
+    ${teeth}
+    ${whiskers}
+    ${earsFront}
+    <circle cx="35" cy="55" r="14" fill="none" stroke="#1B1B1F" stroke-width="4"/>
+    <circle cx="65" cy="55" r="14" fill="none" stroke="#1B1B1F" stroke-width="4"/>
+    <line x1="49" y1="55" x2="51" y2="55" stroke="#1B1B1F" stroke-width="4"/>`;
+}
+
+function renderAnimalHead(kind, size){
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}">${animalFaceMarkup(kind)}</svg>`;
+}
+
+function renderAnimalFull(kind, size){
+  const c = animalInfo[kind];
+  const h = Math.round(size*1.34);
+  return `<svg viewBox="0 0 100 134" width="${size}" height="${h}">
+    <ellipse cx="50" cy="128" rx="34" ry="8" fill="rgba(0,0,0,.08)"/>
+    <path d="M14,132 Q16,90 50,86 Q84,90 86,132 Z" fill="${c.fur}"/>
+    <path d="M32,102 Q50,112 68,102" stroke="${c.patch}" stroke-width="3" fill="none" opacity=".6"/>
+    ${animalFaceMarkup(kind)}
+  </svg>`;
+}
+
+// ---------------- avatares tipo mascota (blobs con contorno grueso) ----------------
+const blobColors = ['#FFDE59','#1E9E5A','#4EA8FF','#FF4F81','#8B5CF6'];
+const blobInfo = {
+  trino:  'Trino',
+  oli:    'Oli',
+  nubi:   'Nubi',
+  vic:    'Vic',
+  leo:    'Leo',
+  toc:    'Toc',
+};
+function blobFace(cx,cy,s=1){
+  return `<circle cx="${cx-8*s}" cy="${cy}" r="${2.6*s}" fill="#1B1B1F"/><circle cx="${cx+8*s}" cy="${cy}" r="${2.6*s}" fill="#1B1B1F"/>
+  <path d="M${cx-7*s},${cy+6*s} Q${cx},${cy+11*s} ${cx+7*s},${cy+6*s}" stroke="#1B1B1F" stroke-width="${2.4*s}" fill="none" stroke-linecap="round"/>`;
+}
+function blobMarkup(kind, color){
+  const OUT = '#1B1B1F';
+  if(kind === 'trino') return `
+    <ellipse cx="50" cy="104" rx="24" ry="5" fill="${OUT}"/>
+    <path d="M50,10 L86,68 Q90,76 82,76 L18,76 Q10,76 14,68 Z" fill="${color}" stroke="${OUT}" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M38,74 L34,98 Q33,102 38,102 L44,102 Q46,102 46,98 L44,74 Z" fill="${color}" stroke="${OUT}" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M62,74 L58,98 Q57,102 62,102 L68,102 Q70,102 70,98 L68,74 Z" fill="${color}" stroke="${OUT}" stroke-width="5" stroke-linejoin="round"/>
+    ${blobFace(50,44)}`;
+  if(kind === 'oli') return `
+    <ellipse cx="46" cy="104" rx="24" ry="5" fill="${OUT}"/>
+    <path d="M32,70 L26,98" stroke="${color}" stroke-width="13" stroke-linecap="round"/>
+    <path d="M32,70 L26,98" stroke="${OUT}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M58,70 L64,98" stroke="${color}" stroke-width="13" stroke-linecap="round"/>
+    <path d="M58,70 L64,98" stroke="${OUT}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M68,32 Q86,16 93,9" stroke="${color}" stroke-width="15" stroke-linecap="round"/>
+    <path d="M68,32 Q86,16 93,9" stroke="${OUT}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <circle cx="93" cy="9" r="8" fill="${color}" stroke="${OUT}" stroke-width="5"/>
+    <ellipse cx="46" cy="46" rx="30" ry="26" fill="${color}" stroke="${OUT}" stroke-width="5"/>
+    ${blobFace(46,42)}`;
+  if(kind === 'nubi') return `
+    <path d="M20,55 Q20,8 50,8 Q80,8 80,55 Q74,64 68,55 Q62,64 56,55 Q50,64 44,55 Q38,64 32,55 Q26,64 20,55 Z" fill="${color}" stroke="${OUT}" stroke-width="5" stroke-linejoin="round"/>
+    ${blobFace(50,36)}`;
+  if(kind === 'vic') return `
+    <ellipse cx="46" cy="104" rx="22" ry="5" fill="${OUT}"/>
+    <path d="M36,74 L30,98" stroke="${color}" stroke-width="12" stroke-linecap="round"/>
+    <path d="M36,74 L30,98" stroke="${OUT}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M56,74 L62,98" stroke="${color}" stroke-width="12" stroke-linecap="round"/>
+    <path d="M56,74 L62,98" stroke="${OUT}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M62,38 L74,10" stroke="${color}" stroke-width="11" stroke-linecap="round"/>
+    <path d="M62,38 L74,10" stroke="${OUT}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M66,34 L82,14" stroke="${color}" stroke-width="11" stroke-linecap="round"/>
+    <path d="M66,34 L82,14" stroke="${OUT}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="46" cy="50" r="28" fill="${color}" stroke="${OUT}" stroke-width="5"/>
+    ${blobFace(46,48)}`;
+  if(kind === 'leo') return `
+    <ellipse cx="50" cy="104" rx="26" ry="5" fill="${OUT}"/>
+    ${[[18,32],[28,14],[42,4],[58,4],[72,14],[82,32]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="11" fill="${color}" stroke="${OUT}" stroke-width="4"/>`).join('')}
+    <path d="M40,90 L36,100 Q35,103 39,103 L45,103 Q47,103 47,100 L45,90 Z" fill="${color}" stroke="${OUT}" stroke-width="4"/>
+    <path d="M60,90 L56,100 Q55,103 59,103 L65,103 Q67,103 67,100 L65,90 Z" fill="${color}" stroke="${OUT}" stroke-width="4"/>
+    <circle cx="50" cy="46" r="32" fill="${color}" stroke="${OUT}" stroke-width="5"/>
+    <circle cx="40" cy="40" r="3" fill="${OUT}"/><circle cx="60" cy="40" r="3" fill="${OUT}"/>
+    <ellipse cx="50" cy="58" rx="15" ry="9" fill="${OUT}"/>`;
+  if(kind === 'toc') return `
+    <ellipse cx="52" cy="104" rx="24" ry="5" fill="${OUT}"/>
+    ${[[28,22],[40,8],[52,4],[64,8],[76,22]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="11" fill="${color}" stroke="${OUT}" stroke-width="4"/>`).join('')}
+    <path d="M16,62 L5,72" stroke="${color}" stroke-width="10" stroke-linecap="round"/>
+    <path d="M16,62 L5,72" stroke="${OUT}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="5" cy="72" r="7" fill="${color}" stroke="${OUT}" stroke-width="4"/>
+    <path d="M56,78 L60,100" stroke="${color}" stroke-width="11" stroke-linecap="round"/>
+    <path d="M56,78 L60,100" stroke="${OUT}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <rect x="26" y="26" width="52" height="52" rx="20" fill="${color}" stroke="${OUT}" stroke-width="5"/>
+    <circle cx="42" cy="52" r="3" fill="${OUT}"/><circle cx="60" cy="52" r="3" fill="${OUT}"/>
+    <path d="M42,60 Q50,68 58,60" stroke="${OUT}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="66" rx="5" ry="7" fill="#D94F70" stroke="${OUT}" stroke-width="3"/>`;
+  return '';
+}
+function renderBlob(kind, color, size){
+  const h = Math.round(size*1.1);
+  return `<svg viewBox="0 0 100 110" width="${size}" height="${h}">${blobMarkup(kind, color)}</svg>`;
+}
+
+function renderCharacter(state, size, full){
+  if(state.type === 'animal'){
+    return full ? renderAnimalFull(state.animalKind, size) : renderAnimalHead(state.animalKind, size);
+  }
+  if(state.type === 'mascota'){
+    return renderBlob(state.mascotKind, state.mascotColor, size);
+  }
+  return full ? renderAvatarFull(state, size) : renderAvatarHead(state, size);
+}
+
+// ---------------- app state ----------------
+let qCategory = 'Identidad';
+let qIndex = 1;
+let feelChoice = 2;
+let streak = 1;
+let stars = 0;
+let answeredCount = 0;
+
+const rutaNodes = [
+  {label:'Conócete', cat:'Identidad', icon:illus.identidad('#3D2645',26), color:'#FFD34D'},
+  {label:'Comunícate', cat:'Comunicación', icon:illus.comunicacion('#3D2645',26), color:'#7CC1F2'},
+  {label:'Proyéctate', cat:'Profesión', icon:illus.profesion('#3D2645',26), color:'#C9A6EA'},
+  {label:'Destácate', cat:'Proyección', icon:illus.proyeccion('#3D2645',24), color:'#F0847A'},
+  {label:'Explora áreas', cat:'areas', icon:illus.areas('#3D2645',26), color:'#7FD1AC'},
+];
+
+const areasInfo = [
+  {name:'Branding', color:'#4EA8FF', desc:'Construir la identidad y personalidad de una marca.',
+   example:'Creas la identidad visual y el tono de voz de una marca de café local, desde el logo hasta cómo le habla a sus clientes en redes.',
+   steps:['Investigar', 'Definir identidad', 'Aplicarla en todo punto de contacto'],
+   prompt:'Piensa en una marca (real o inventada) y escribe su personalidad en una frase.',
+   template:'Somos cercanos, curiosos y un poco irreverentes — hablamos como alguien de confianza, no como una empresa.'},
+  {name:'Digital', color:'#2EC4B6', desc:'Estrategia y contenido para redes y plataformas online.',
+   example:'Diseñas el calendario de contenido de Instagram de una marca de ropa: qué publicar cada día y cómo medir qué tan bien funcionó.',
+   steps:['Investigar audiencia', 'Planear contenido', 'Medir resultados'],
+   prompt:'Escribe una idea de post para redes sociales de una marca que te guste.',
+   template:'Carrusel de 3 slides mostrando el "antes y después" de usar el producto, con un CTA a comentar su propia experiencia.'},
+  {name:'Medios', color:'#8B5CF6', desc:'Planificación y compra de espacios publicitarios.',
+   example:'Decides en qué canales —TV, redes, vallas— invertir el presupuesto de una campaña para que llegue al público correcto.',
+   steps:['Definir público', 'Elegir canales', 'Repartir presupuesto'],
+   prompt:'Si tuvieras $1000 para publicidad, ¿en qué canales los repartirías y por qué?',
+   template:'40% Instagram Ads (público joven), 30% influencers locales, 30% pauta en Spotify — porque así llego a mi público en los momentos donde más atención presta.'},
+  {name:'Creatividad', color:'#FF4F81', desc:'Ideación de conceptos y piezas creativas.',
+   example:'Ideas el concepto y el guion de un comercial para el lanzamiento de un nuevo producto.',
+   steps:['Encontrar el insight', 'Idear el concepto', 'Producir la pieza'],
+   prompt:'Escribe un concepto creativo en una sola frase para el lanzamiento de un producto.',
+   template:'"El café que te despierta antes de que suene la alarma" — un concepto que juega con la anticipación y la rutina matutina.'},
+  {name:'Cuentas', color:'#FF8A3D', desc:'Gestión de la relación con el cliente y el proyecto.',
+   example:'Eres el puente entre el cliente y el equipo creativo, cuidando que el proyecto cumpla plazos y expectativas.',
+   steps:['Entender al cliente', 'Coordinar al equipo', 'Entregar a tiempo'],
+   prompt:'Describe cómo le explicarías a un cliente que su campaña se retrasó una semana.',
+   template:'Quiero ser transparente: encontramos un detalle en la producción que vale la pena resolver bien antes de lanzar. Ajustamos el cronograma para entregar la próxima semana sin sacrificar calidad.'},
+];
+let selectedArea = null;
+let areaAnswers = {};
+function toggleArea(i){ selectedArea = selectedArea === i ? null : i; render('areas'); }
+function useAreaTemplate(i){
+  areaAnswers[i] = areasInfo[i].template;
+  const ta = document.getElementById('areaInput'+i);
+  if(ta) ta.value = areasInfo[i].template;
+}
+function copyAreaAnswer(i, btn){
+  const text = (areaAnswers[i] || '').trim();
+  const orig = btn.textContent;
+  if(!text){ btn.textContent = 'Escribe algo primero'; setTimeout(()=>{ btn.textContent = orig; }, 1500); return; }
+  const flash = ()=>{ btn.textContent = '¡Copiado! ✓'; setTimeout(()=>{ btn.textContent = orig; }, 1500); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(flash).catch(flash);
+  } else { flash(); }
+}
+
+function weeklySummary(){
+  if(answeredCount === 0){
+    return 'Aún no respondes preguntas esta semana. Empieza por "Conócete" para arrancar tu racha. 🔥';
+  }
+  return `Esta semana respondiste ${answeredCount} pregunta(s) y ganaste ${stars} estrella(s). Vas construyendo tu identidad poco a poco. ✨`;
+}
+
+const questionBank = {
+  Identidad: ['¿Quién eres cuando nadie te está evaluando?', '¿Qué valores son fundamentales para ti como persona y como futura profesional?', '¿Qué te hace diferente de otros comunicadores?', '¿Qué historia te gustaría que contaran sobre ti?', '¿Qué parte de ti no quieres perder al graduarte?'],
+  Comunicación: ['¿Cómo te describirías en una conversación con un cliente?', '¿Qué tono usas cuando presentas una idea?', '¿Qué canal te representa mejor: escrito, visual o hablado?'],
+  Profesión: ['¿Qué quieres lograr como profesional en 5 años?', '¿Qué tipo de proyectos te emocionan más?'],
+  Proyección: ['¿Cómo quieres que te reconozcan en la industria?', '¿Qué quieres que la gente piense al ver tu trabajo?'],
+};
+
+let currentScreen = 'onboarding';
+function go(screen){
+  currentScreen = screen;
+  render(screen);
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===screen));
+}
+
+const labels = {
+  hero:'Bienvenida', onboarding:'Personaliza tu pantalla', avatarSetup:'Crea tu avatar', home:'Inicio', explorar:'Explorar / Preguntas', pregunta:'Responder pregunta',
+  registrar:'Registrar experiencia', progreso:'Mi evolución', perfil:'Mi identidad', insights:'Insights',
+  personalizar:'Personalizar', areas:'Áreas de la comunicación'
+};
+
+// ---------------- screen templates ----------------
+function screenHero(){
+  return `
+  <div class="hero-video">
+    <div class="morph-stage">
+      <div class="morph-char m1">${illus.mascot('currentColor',120)}</div>
+      <div class="morph-char m2">${renderBlob('trino','currentColor',110)}</div>
+      <div class="morph-char m3">${renderBlob('nubi','currentColor',110)}</div>
+      <div class="morph-char m4">${renderBlob('leo','currentColor',110)}</div>
+    </div>
+    <div class="hero-video-brand">Espejo C</div>
+    <p class="hero-video-tag">Tu proceso, tu identidad, tu proyección.</p>
+    <div class="hero-bottom">
+      <button class="btn-dark-pill" onclick="go('onboarding')">Comenzar</button>
+      <div class="hero-link" onclick="go('home')">Ya tengo cuenta</div>
+    </div>
+  </div>`;
+}
+
+function screenOnboarding(){
+  return `
+  <div class="onboard-full">
+    <div class="onboard-top">
+      <div class="onboard-brand">Espejo C ✦</div>
+      <div class="onboard-illustration-wrap">${illus.mascot('#fff',72)}</div>
+      <div class="onboard-step-title">Personaliza tu pantalla</div>
+      <p class="onboard-step-sub">Elige el color con el que quieres vivir tu Espejo C.</p>
+      <div class="onboard-swatch-row">
+        ${themeColors.map(c=>`
+          <div class="onboard-swatch" style="background:${c.hex}; border:3px solid ${theme===c.hex?'#fff':'rgba(255,255,255,.35)'};" onclick="setTheme('${c.hex}')">
+            ${theme===c.hex ? '<span style="color:#fff;font-size:15px;">✓</span>' : ''}
+          </div>`).join('')}
+      </div>
+    </div>
+    <div style="width:100%;">
+      <button class="btn-onboard-white" onclick="go('avatarSetup')">Comenzar</button>
+      <button class="btn-onboard-ghost" onclick="go('home')">Ya tengo cuenta</button>
+    </div>
+  </div>`;
+}
+
+function screenAvatarSetup(){
+  const humanNames = ['Teo','Stasy','Mini','Coul','Mat'];
+  const gallery = avatarState.type === 'humano'
+    ? humanPresets.map((p,i)=>`
+      <div class="preset-item" onclick='setAvatarPreset(${i})'>
+        <div class="preset-circle ${presetMatches(p)?'selected':''}">${renderAvatarHead(p, 44)}</div>
+        <div class="preset-name">${humanNames[i]}</div>
+      </div>`).join('')
+    : avatarState.type === 'animal'
+    ? Object.keys(animalInfo).map(k=>`
+      <div class="preset-item" onclick="setAvatar('animalKind','${k}'); render('avatarSetup')">
+        <div class="preset-circle ${avatarState.animalKind===k && avatarState.type==='animal'?'selected':''}">${renderAnimalHead(k, 44)}</div>
+        <div class="preset-name">${animalInfo[k].name}</div>
+      </div>`).join('')
+    : Object.keys(blobInfo).map(k=>`
+      <div class="preset-item" onclick="setAvatar('mascotKind','${k}'); render('avatarSetup')">
+        <div class="preset-circle ${avatarState.mascotKind===k && avatarState.type==='mascota'?'selected':''}">${renderBlob(k, avatarState.mascotColor, 40)}</div>
+        <div class="preset-name">${blobInfo[k]}</div>
+      </div>`).join('');
+  return `
+  <div class="avatar-setup-light">
+    <div style="width:100%; text-align:center;">
+      <div class="type-toggle-light">
+        <div class="${avatarState.type==='humano'?'active':''}" onclick="setAvatar('type','humano'); render('avatarSetup')">Humano</div>
+        <div class="${avatarState.type==='animal'?'active':''}" onclick="setAvatar('type','animal'); render('avatarSetup')">Animal</div>
+        <div class="${avatarState.type==='mascota'?'active':''}" onclick="setAvatar('type','mascota'); render('avatarSetup')">Mascota</div>
+      </div>
+      <div class="setup-title">Personaliza<br>tu avatar</div>
+      <div class="big-avatar-preview">${renderCharacter(avatarState, 130, true)}</div>
+      ${avatarState.type==='mascota' ? `<div class="color-dot-row">${blobColors.map(c=>`<div class="color-dot ${avatarState.mascotColor===c?'selected':''}" style="background:${c}" onclick="setAvatar('mascotColor','${c}'); render('avatarSetup')"></div>`).join('')}</div>` : ''}
+      <div class="preset-row">${gallery}</div>
+    </div>
+    <button class="btn-dark-pill" onclick="go('home')">Empezar</button>
+  </div>`;
+}
+
+function shortWeeklyLine(){
+  if(answeredCount === 0) return '¡Empieza tu racha hoy! 🔥 Aún no registras nada esta semana.';
+  return `¡Llevas ${answeredCount} respuesta(s) y ${stars} estrella(s) esta semana! 🎉`;
+}
+
+function screenHome(){
+  const now = new Date();
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  let dateStr = now.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+  dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  return `
+  <div class="home-hero">
+    <div class="badge-row" style="justify-content:center;">
+      <div class="badge flame">${illus.flame('#FF6B3D',16)} ${streak}</div>
+      <div class="badge star">${illus.proyeccion('#B8860B',15)} ${stars}</div>
+    </div>
+    <div class="avatar-wrap-outer">
+      <span class="sparkle s1">${illus.sparkle('#FFDE59',15)}</span><span class="sparkle s2">${illus.sparkle('#fff',12)}</span><span class="sparkle s3">${illus.sparkle('#FFDE59',13)}</span>
+      <div class="avatar-big-wrap">${renderCharacter(avatarState, 82, false)}</div>
+    </div>
+    <div class="avatar-bubble">${shortWeeklyLine()}</div>
+    <div class="greeting-title" style="color:#fff;">${greet}</div>
+    <div class="greeting-date" style="color:rgba(255,255,255,.85);">${dateStr}</div>
+  </div>
+  <div class="brand-big">Espejo C</div>
+  <p class="brand-tag">Tu experiencia para conocerte y construir tu marca personal, semestre a semestre.</p>
+  <div class="pregunta-dia-card" style="position:relative;">
+    <div style="position:absolute; top:-16px; right:16px;">${illus.mascot('#fff',34)}</div>    <div class="pregunta-dia-label">PREGUNTA DEL DÍA</div>
+    <div class="pregunta-dia-text">¿Qué aprendiste esta semana sobre cómo te comunicas?</div>
+    <div class="pregunta-dia-link" onclick="qCategory='Comunicación'; qIndex=1; go('pregunta')">Responder ›</div>
+  </div>
+  <div class="ruta-title">Tu ruta</div>
+  <div class="ruta-path">
+    ${rutaNodes.map((n,i)=>`
+      <div class="ruta-node-wrap">
+        ${n.cat==='areas' ? '<span class="new-tag">¡Nuevo!</span>' : ''}
+        <div class="ruta-node" style="background:${n.color}" onclick="${n.cat==='areas' ? "go('areas')" : `qCategory='${n.cat}'; qIndex=1; go('pregunta')`}">${n.icon}</div>
+        <div class="ruta-label">${n.label}</div>
+      </div>
+      ${i < rutaNodes.length-1 ? '<div class="ruta-connector"></div>' : ''}
+    `).join('')}
+  </div>
+  <div class="section-title" style="margin-top:26px;">Tu progreso</div>
+  <div class="card progress-card">
+    <div class="ring" style="--pct:65"><div class="ring-inner"><b>65%</b><span>de tu camino</span></div></div>
+    <div style="flex:1;">
+      <div class="stat-row"><span>Preguntas respondidas</span><b>24</b></div>
+      <div class="stat-row"><span>Experiencias registradas</span><b>12</b></div>
+      <div class="stat-row"><span>Reflexiones guardadas</span><b>8</b></div>
+    </div>
+  </div>
+  <div class="section-title">Resumen de tu semana</div>
+  <div class="card" style="font-size:12.5px; color:var(--ink-soft); line-height:1.5;">${weeklySummary()}</div>
+  <div class="section-title">Sigue explorando</div>
+  <div class="quick-row">
+    <div class="pill-btn pat-a" onclick="go('explorar')">${illus.idea('#fff',20)}Responder preguntas</div>
+    <div class="pill-btn pat-b" onclick="go('registrar')">${illus.folder('#fff',20)}Registrar experiencias</div>
+  </div>`;
+}
+
+function screenAreas(){
+  return `
+  <div class="back-row"><div class="back-btn" onclick="go('home')">${icons.back}</div></div>
+  <div class="section-title" style="margin-top:0;">Áreas de la comunicación publicitaria</div>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Toca cada área para ver un ejemplo real de cómo se ve en la práctica.</p>
+  ${areasInfo.map((a,i)=>`
+    <div class="area-card ${selectedArea===i?'open':''}" style="--accent:${a.color};" onclick="toggleArea(${i})">
+      <div class="area-card-head">
+        <h4>${a.name}</h4>
+        <span class="area-chevron">${selectedArea===i?'−':'+'}</span>
+      </div>
+      <p class="area-desc">${a.desc}</p>
+      ${selectedArea===i ? `
+        <div class="area-example" onclick="event.stopPropagation()">
+          <div class="area-example-label">EJEMPLO</div>
+          <p>${a.example}</p>
+          <div class="area-steps">
+            ${a.steps.map((s,j)=>`<span class="area-step">${j+1}. ${s}</span>${j<a.steps.length-1?'<span class="area-step-arrow">›</span>':''}`).join('')}
+          </div>
+          <div class="area-example-label" style="margin-top:14px;">PRACTÍCALO TÚ</div>
+          <p style="font-size:12.5px; color:var(--ink); line-height:1.5; margin-bottom:8px;">${a.prompt}</p>
+          <textarea id="areaInput${i}" class="area-textarea" placeholder="Escribe tu respuesta aquí..." oninput="areaAnswers[${i}]=this.value">${areaAnswers[i]||''}</textarea>
+          <div class="area-practice-actions">
+            <button class="btn-secondary area-btn-small" onclick="useAreaTemplate(${i})">💡 Ayúdame con un ejemplo</button>
+            <button class="btn-primary area-btn-small" onclick="copyAreaAnswer(${i}, this)">Copiar</button>
+          </div>
+        </div>` : ''}
+    </div>`).join('')}`;
+}
+
+function screenExplorar(){
+  const cats = [
+    {k:'Identidad', icon:illus.identidad('#fff',24), bg:'#4EA8FF', desc:'¿Quién soy?'},
+    {k:'Comunicación', icon:illus.comunicacion('#fff',24), bg:'#2EC4B6', desc:'¿Cómo me expreso?'},
+    {k:'Profesión', icon:illus.profesion('#fff',24), bg:'#8B5CF6', desc:'¿Qué quiero lograr?'},
+    {k:'Proyección', icon:illus.proyeccion('#fff',22), bg:'#FF4F81', desc:'¿Cómo me reconocen?'},
+  ];
+  return `
+  <div class="section-title" style="margin-top:10px;">Responder preguntas</div>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">Elige qué quieres explorar hoy.</p>
+  <div class="tile-grid">
+    ${cats.map(c=>`
+      <div class="tile" style="background:${c.bg}" onclick="qCategory='${c.k}'; qIndex=1; go('pregunta')">
+        <div class="tile-icon">${c.icon}</div>
+        <div class="tile-title">${c.k}</div>
+        <div class="tile-sub">${c.desc}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function screenPregunta(){
+  const list = questionBank[qCategory];
+  const pct = Math.round((qIndex/list.length)*100);
+  return `
+  <div class="back-row">
+    <div class="back-btn" onclick="go('explorar')">${icons.back}</div>
+  </div>
+  <div class="eyebrow">${qCategory} · ${qIndex}/${list.length}</div>
+  <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+  <div class="q-text">${list[qIndex-1]}</div>
+  <textarea placeholder="Escribe tu respuesta aquí..."></textarea>
+  <div class="q-actions">
+    <button class="btn-secondary" onclick="go('home')" style="flex:1;">Guardar y salir</button>
+    <button class="btn-primary" style="flex:1;" onclick="nextQuestion()">Siguiente</button>
+  </div>`;
+}
+function confetti(){
+  const colors = ['#FF4F81','#FF8A3D','#2EC4B6','#8B5CF6','#4EA8FF','#FFC93C'];
+  const rect = document.querySelector('.phone').getBoundingClientRect();
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  for(let i=0; i<16; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    const angle = Math.random()*Math.PI*2;
+    const dist = 60 + Math.random()*90;
+    p.style.left = cx+'px'; p.style.top = cy+'px';
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+    p.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+    p.style.setProperty('--rot', (Math.random()*360)+'deg');
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 950);
+  }
+}
+
+function nextQuestion(){
+  const list = questionBank[qCategory];
+  answeredCount++;
+  if(qIndex < list.length){ qIndex++; render('pregunta'); }
+  else { stars++; confetti(); go('progreso'); }
+}
+
+function screenRegistrar(){
+  return `
+  <div class="back-row"><div class="back-btn" onclick="go('home')">${icons.back}</div></div>
+  <div class="section-title" style="margin-top:0;">Registrar experiencia</div>
+  <p style="font-size:12.5px; color:var(--ink-soft);">Guarda momentos, aprendizajes y logros importantes.</p>
+  <label>Título de la experiencia</label>
+  <input type="text" placeholder="Ej. Mi primer proyecto universitario">
+  <label>¿Qué fue lo más importante que aprendiste?</label>
+  <textarea style="min-height:80px;" placeholder="Escribe aquí..."></textarea>
+  <label>¿Cómo te hizo sentir?</label>
+  <div class="emoji-row">
+    ${[0,1,2,3,4].map(i=>`<div class="emoji-btn ${i===feelChoice?'active':''}" style="${i===feelChoice?'background:var(--navy); border-color:var(--navy);':''}" onclick="feelChoice=${i}; render('registrar')">${moodIcon(i, i===feelChoice)}</div>`).join('')}
+  </div>
+  <label>Fecha</label>
+  <input type="date" value="2024-05-20">
+  <div style="margin-top:18px;"><button class="btn-primary" onclick="go('progreso')">Guardar experiencia</button></div>`;
+}
+
+function screenProgreso(){
+  return `
+  <div class="section-title" style="margin-top:8px;">Mi evolución</div>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Así ha sido tu camino hasta ahora.</p>
+  <div class="tabs">
+    <div class="tab active">Línea de tiempo</div>
+    <div class="tab">Estadísticas</div>
+  </div>
+  <div class="timeline-item"><div class="dot" style="background:#DCE8F5;">${illus.book('#2B5A8C',16)}</div><div><div class="tl-date">MAY 2024</div><div class="tl-title">Reflexión sobre mis fortalezas</div></div></div>
+  <div class="timeline-item"><div class="dot" style="background:#E4D9EC;">${illus.backpack('#5B3A85',16)}</div><div><div class="tl-date">ABR 2024</div><div class="tl-title">Mi mayor desafío del semestre</div></div></div>
+  <div class="timeline-item"><div class="dot" style="background:#FBE7C4;">${illus.proyeccion('#B8860B',14)}</div><div><div class="tl-date">MAR 2024</div><div class="tl-title">¿Cómo quiero que me reconozcan?</div></div></div>
+  <div class="timeline-item"><div class="dot" style="background:#D9E6F2;">${illus.comunicacion('#2B5A8C',16)}</div><div><div class="tl-date">FEB 2024</div><div class="tl-title">Expectativas sobre la carrera</div></div></div>`;
+}
+
+function screenPerfil(){
+  return `
+  <div style="text-align:center; margin-top:4px;">
+    <div style="display:flex; justify-content:center;">${renderCharacter(avatarState, 82, false)}</div>
+    <div class="profile-name" onclick="go('personalizar')">Mi identidad</div>
+    <div style="font-size:11.5px; color:var(--ink-soft); margin-top:-2px; margin-bottom:16px; cursor:pointer;" onclick="go('personalizar')">${icons.gear} Personalizar avatar</div>
+  </div>
+  <div class="blob-row">
+    <div class="blob-card" style="background:#8B5CF6;" onclick="go('explorar')">
+      <div class="blob-refresh">↻</div>
+      <div class="blob-mascot">${illus.mascot('rgba(255,255,255,.4)',78)}</div>
+      <div class="blob-value">24</div>
+      <div class="blob-label">Preguntas<br>respondidas</div>
+    </div>
+    <div class="blob-card" style="background:#FF4F81;" onclick="go('registrar')">
+      <div class="blob-refresh">↻</div>
+      <div class="blob-mascot">${illus.mascot('rgba(255,255,255,.4)',78)}</div>
+      <div class="blob-value">12</div>
+      <div class="blob-label">Experiencias<br>registradas</div>
+    </div>
+  </div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline; margin:18px 0 10px;">
+    <div class="section-title" style="margin:0;">Progreso</div>
+    <span style="font-size:11.5px; font-weight:700; color:var(--navy); cursor:pointer;" onclick="go('insights')">Ver todo</span>
+  </div>
+  ${[['Identidad',70,'#4EA8FF'],['Comunicación',60,'#2EC4B6'],['Profesión',35,'#8B5CF6'],['Proyección',40,'#FF4F81']].map(([label,pct,color])=>`
+    <div class="pill-row">
+      <span class="pill-row-label">${label}</span>
+      <div class="pill-track"><div class="pill-fill" style="width:${pct}%; background:${color};"><span>${pct}%</span></div></div>
+    </div>`).join('')}
+  <div class="card id-card" style="margin-top:16px; --accent:#4EA8FF;"><div><h4>Fortalezas</h4><p>Creativa, empática, organizada</p></div><div class="link-edit">Ver más</div></div>
+  <div class="card id-card" style="margin-top:10px; --accent:#2EC4B6;"><div><h4>Intereses</h4><p>Diseño, publicidad, moda, fotografía</p></div><div class="link-edit">Ver más</div></div>
+  <div class="card id-card" style="margin-top:10px; --accent:#8B5CF6;"><div><h4>Mi propósito</h4><p>Inspirar a otros a comunicar con propósito.</p></div><div class="link-edit" onclick="go('insights')">Editar</div></div>
+  <div class="card" style="margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
+    <div><h4 style="font-size:13px; color:var(--navy); margin-bottom:2px;">Recordatorios</h4><p style="font-size:11.5px; color:var(--ink-soft);">Un aviso de vez en cuando para hacer tu registro</p></div>
+    <button class="btn-secondary" style="width:auto; padding:8px 14px; font-size:12px;" onclick="activarRecordatorios()">${remindersOn ? 'Activados ✓' : 'Activar'}</button>
+  </div>`;
+}
+
+function screenInsights(){
+  const vals = [40,65,55,80,60];
+  return `
+  <div class="section-title" style="margin-top:8px;">Insights</div>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">Descubre patrones en tu proceso.</p>
+  <div class="card">
+    <div style="font-size:12.5px; font-weight:700; color:var(--navy);">Crecimiento personal</div>
+    <div style="font-size:11px; color:var(--ink-soft); margin:4px 0 8px;">Has registrado 8 reflexiones en los últimos 3 meses.</div>
+    <div class="bars">
+      ${vals.map(v=>`<div style="height:${v}%; background:var(--navy);"></div>`).join('')}
+    </div>
+    <div class="bar-legend"><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span></div>
+  </div>
+  <div class="metric-row">
+    <div class="metric-label"><span>Identidad</span><b>70%</b></div>
+    <div class="metric-track"><div class="metric-fill" style="width:70%; background:#4EA8FF;"></div></div>
+  </div>
+  <div class="metric-row">
+    <div class="metric-label"><span>Comunicación</span><b>60%</b></div>
+    <div class="metric-track"><div class="metric-fill" style="width:60%; background:#2EC4B6;"></div></div>
+  </div>
+  <div class="metric-row">
+    <div class="metric-label"><span>Profesión</span><b>35%</b></div>
+    <div class="metric-track"><div class="metric-fill" style="width:35%; background:#8B5CF6;"></div></div>
+  </div>
+  <div class="metric-row">
+    <div class="metric-label"><span>Proyección</span><b>40%</b></div>
+    <div class="metric-track"><div class="metric-fill" style="width:40%; background:#FF4F81;"></div></div>
+  </div>
+  <div class="quote-card"><b>"No se trata de tenerlo todo claro, sino de seguir construyéndote."</b><br>Sigue reflejando tu mejor versión ✨</div>`;
+}
+
+function screenPersonalizar(){
+  return `
+  <div class="back-row"><div class="back-btn" onclick="go('perfil')">${icons.back}</div></div>
+  <div class="section-title" style="margin-top:0; text-align:center;">Personalizar</div>
+  <div style="display:flex; justify-content:center; margin:4px 0 16px;">${renderCharacter(avatarState, 96, true)}</div>
+  <div class="tabs">
+    <div class="tab ${personalizarTab==='tema'?'active':''}" onclick="personalizarTab='tema'; render('personalizar')">Tema</div>
+    <div class="tab ${personalizarTab==='avatar'?'active':''}" onclick="personalizarTab='avatar'; render('personalizar')">Avatar</div>
+  </div>
+  ${personalizarTab==='tema' ? temaTabHTML() : avatarTabHTML()}`;
+}
+
+function temaTabHTML(){
+  return `
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">Elige el color principal de tu app.</p>
+  <div style="display:flex; flex-wrap:wrap; gap:14px;">
+  ${themeColors.map(c=>`
+    <div style="text-align:center;">
+      <div onclick="setTheme('${c.hex}')" style="width:44px; height:44px; border-radius:50%; background:${c.hex}; display:flex; align-items:center; justify-content:center; cursor:pointer; border:3px solid ${theme===c.hex?'var(--ink)':'transparent'};">
+        ${theme===c.hex ? '<span style="color:#fff; font-size:16px;">✓</span>' : ''}
+      </div>
+      <div style="font-size:10px; color:var(--ink-soft); margin-top:4px;">${c.name}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function avatarTabHTML(){
+  const humanPart = `
+  <label style="margin-top:2px;">Tono de piel</label>
+  <div style="display:flex; gap:10px; margin-bottom:4px;">
+  ${skinTones.map(c=>`<div onclick="setAvatar('skin','${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${avatarState.skin===c?'var(--navy)':'var(--outline)'};"></div>`).join('')}
+  </div>
+  <label>Color de cabello</label>
+  <div style="display:flex; gap:10px; margin-bottom:4px;">
+  ${hairColors.map(c=>`<div onclick="setAvatar('hair','${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${avatarState.hair===c?'var(--navy)':'#00000022'};"></div>`).join('')}
+  </div>
+  <label>Estilo de cabello</label>
+  <div style="display:flex; gap:8px; margin-bottom:4px;">
+  ${hairStyles.map(s=>`<div onclick="setAvatar('style','${s}')" style="flex:1;text-align:center;padding:10px 0;border-radius:12px;border:1.5px solid ${avatarState.style===s?'var(--navy)':'var(--line)'};font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;">${s.charAt(0).toUpperCase()+s.slice(1)}</div>`).join('')}
+  </div>
+  <label>Lentes</label>
+  <div onclick="setAvatar('lentes', ${!avatarState.lentes})" style="display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border:1px solid var(--line); border-radius:12px; cursor:pointer;">
+    <span style="font-size:13px; font-weight:600; color:var(--navy);">Usar lentes</span>
+    <span style="font-size:12px; color:var(--ink-soft);">${avatarState.lentes ? 'Sí ✓' : 'No'}</span>
+  </div>`;
+
+  const animalPart = `
+  <label style="margin-top:2px;">Elige tu animalito</label>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px;">
+  ${Object.keys(animalInfo).map(k=>`
+    <div onclick="setAvatar('animalKind','${k}')" style="text-align:center; padding:8px 4px; border-radius:14px; border:2px solid ${avatarState.animalKind===k?'var(--navy)':'var(--line)'}; background:${avatarState.animalKind===k?'var(--panel)':'#fff'}; cursor:pointer;">
+      ${renderAnimalHead(k, 48)}
+      <div style="font-size:11px; font-weight:700; color:var(--navy); margin-top:2px;">${animalInfo[k].name}</div>
+    </div>`).join('')}
+  </div>`;
+
+  const mascotaPart = `
+  <label style="margin-top:2px;">Color de tu mascota</label>
+  <div style="display:flex; gap:10px; margin-bottom:14px;">
+  ${blobColors.map(c=>`<div onclick="setAvatar('mascotColor','${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${avatarState.mascotColor===c?'var(--navy)':'var(--outline)'};"></div>`).join('')}
+  </div>
+  <label style="margin-top:0;">Elige tu personaje</label>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px;">
+  ${Object.keys(blobInfo).map(k=>`
+    <div onclick="setAvatar('mascotKind','${k}')" style="text-align:center; padding:8px 4px; border-radius:14px; border:2px solid ${avatarState.mascotKind===k?'var(--navy)':'var(--line)'}; background:${avatarState.mascotKind===k?'var(--panel)':'#fff'}; cursor:pointer;">
+      ${renderBlob(k, avatarState.mascotColor, 42)}
+      <div style="font-size:11px; font-weight:700; color:var(--navy); margin-top:2px;">${blobInfo[k]}</div>
+    </div>`).join('')}
+  </div>`;
+
+  return `
+  <label style="margin-top:2px;">Tipo de avatar</label>
+  <div style="display:flex; gap:8px; margin-bottom:14px;">
+    <div onclick="setAvatar('type','humano')" style="flex:1; text-align:center; padding:9px 0; border-radius:12px; border:1.5px solid ${avatarState.type==='humano'?'var(--navy)':'var(--line)'}; background:${avatarState.type==='humano'?'var(--panel)':'#fff'}; font-size:12px; font-weight:700; color:var(--navy); cursor:pointer;">Humano</div>
+    <div onclick="setAvatar('type','animal')" style="flex:1; text-align:center; padding:9px 0; border-radius:12px; border:1.5px solid ${avatarState.type==='animal'?'var(--navy)':'var(--line)'}; background:${avatarState.type==='animal'?'var(--panel)':'#fff'}; font-size:12px; font-weight:700; color:var(--navy); cursor:pointer;">Animal</div>
+    <div onclick="setAvatar('type','mascota')" style="flex:1; text-align:center; padding:9px 0; border-radius:12px; border:1.5px solid ${avatarState.type==='mascota'?'var(--navy)':'var(--line)'}; background:${avatarState.type==='mascota'?'var(--panel)':'#fff'}; font-size:12px; font-weight:700; color:var(--navy); cursor:pointer;">Mascota</div>
+  </div>
+  ${avatarState.type === 'humano' ? humanPart : avatarState.type === 'animal' ? animalPart : mascotaPart}
+  <div style="margin-top:18px;"><button class="btn-primary" onclick="go('perfil')">Guardar cambios</button></div>`;
+}
+
+// ---------------- render ----------------
+function render(screen){
+  const map = {
+    hero: screenHero, onboarding: screenOnboarding, avatarSetup: screenAvatarSetup, home: screenHome, explorar: screenExplorar,
+    pregunta: screenPregunta, registrar: screenRegistrar, progreso: screenProgreso,
+    perfil: screenPerfil, insights: screenInsights, personalizar: screenPersonalizar, areas: screenAreas
+  };
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = map[screen]();
+  contentEl.scrollTop = 0;
+  contentEl.classList.toggle('full-bleed', screen === 'hero' || screen === 'onboarding' || screen === 'avatarSetup');
+  contentEl.classList.remove('fade');
+  void contentEl.offsetWidth;
+  contentEl.classList.add('fade');
+  document.getElementById('navbar').innerHTML = (screen==='hero' || screen==='onboarding' || screen==='avatarSetup') ? '' : `
+    <div class="nav-item" data-nav="home" onclick="go('home')">${icons.home}<span>Inicio</span></div>
+    <div class="nav-item" data-nav="explorar" onclick="go('explorar')">${icons.search}<span>Explorar</span></div>
+    <div class="nav-plus" onclick="go('registrar')">${icons.plus}</div>
+    <div class="nav-item" data-nav="progreso" onclick="go('progreso')">${icons.chart}<span>Progreso</span></div>
+    <div class="nav-item" data-nav="perfil" onclick="go('perfil')">${icons.user}<span>Perfil</span></div>`;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===screen));
+}
+
+let remindersOn = false;
+
+go('hero');
+
+// Nota: el registro de service worker (instalación como PWA) no aplica
+// dentro de esta vista de artifact; el botón de notificaciones de abajo
+// sigue funcionando como demo local con la API estándar de Notification.
+
+function activarRecordatorios(){
+  if(!('Notification' in window)){
+    alert('Este navegador no soporta notificaciones. Pruébalo en Chrome/Safari sobre HTTPS.');
+    return;
+  }
+  Notification.requestPermission().then(permiso=>{
+    if(permiso === 'granted'){
+      new Notification('¡Hora de tu registro! 🪞', {
+        body: '¿Qué aprendiste esta semana? Tómate 2 minutos para reflejarlo en Espejo C.',
+        icon: 'icon-192.png'
+      });
+      remindersOn = true;
+    } else {
+      remindersOn = false;
+    }
+    render(currentScreen);
+  });
+}
+</script>
+</body>
+</html>
