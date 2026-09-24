@@ -858,6 +858,8 @@ const areasInfo = [
 let selectedArea = null;
 let progresoTab = 'linea';
 function setProgresoTab(t){ progresoTab = t; render('progreso'); }
+let perfilExpanded = { fortalezas:false, intereses:false };
+function togglePerfilCard(key){ perfilExpanded[key] = !perfilExpanded[key]; render('perfil'); }
 let areaAnswers = {};
 function toggleArea(i){ selectedArea = selectedArea === i ? null : i; render('areas'); }
 function useAreaTemplate(i){
@@ -1210,8 +1212,8 @@ function screenPerfil(){
       <span class="pill-row-label">${label}</span>
       <div class="pill-track"><div class="pill-fill" style="width:${pct}%; background:${color};"><span>${pct}%</span></div></div>
     </div>`).join('')}
-  <div class="card id-card" style="margin-top:16px; --accent:#4EA8FF;"><div><h4>Fortalezas</h4><p>Creativa, empática, organizada</p></div><div class="link-edit">Ver más</div></div>
-  <div class="card id-card" style="margin-top:10px; --accent:#2EC4B6;"><div><h4>Intereses</h4><p>Diseño, publicidad, moda, fotografía</p></div><div class="link-edit">Ver más</div></div>
+  <div class="card id-card" style="margin-top:16px; --accent:#4EA8FF; cursor:pointer;" onclick="togglePerfilCard('fortalezas')"><div><h4>Fortalezas</h4><p>Creativa, empática, organizada${perfilExpanded.fortalezas ? '<br><br>Son cualidades que ya se notan en cómo abordas tus proyectos y en cómo te relacionas con tu equipo.' : ''}</p></div><div class="link-edit">${perfilExpanded.fortalezas ? 'Ver menos' : 'Ver más'}</div></div>
+  <div class="card id-card" style="margin-top:10px; --accent:#2EC4B6; cursor:pointer;" onclick="togglePerfilCard('intereses')"><div><h4>Intereses</h4><p>Diseño, publicidad, moda, fotografía${perfilExpanded.intereses ? '<br><br>Aparecen una y otra vez en tus respuestas — son las áreas donde tu curiosidad se enciende sola.' : ''}</p></div><div class="link-edit">${perfilExpanded.intereses ? 'Ver menos' : 'Ver más'}</div></div>
   <div class="card id-card" style="margin-top:10px; --accent:#8B5CF6;"><div><h4>Mi propósito</h4><p>Inspirar a otros a comunicar con propósito.</p></div><div class="link-edit" onclick="go('insights')">Editar</div></div>
   <div class="card" style="margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
     <div><h4 style="font-size:13px; color:var(--navy); margin-bottom:2px;">Recordatorios</h4><p style="font-size:11.5px; color:var(--ink-soft);">Un aviso de vez en cuando para hacer tu registro</p></div>
