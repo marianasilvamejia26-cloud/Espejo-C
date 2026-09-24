@@ -2,9 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Espejo C — Prototipo</title>
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E9E5A">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Espejo C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -483,6 +488,28 @@
   .area-textarea{ width:100%; min-height:70px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font-family:'Inter'; font-size:12.5px; color:var(--ink); resize:none; background:#fff; }
   .area-practice-actions{ display:flex; gap:8px; margin-top:10px; }
   .area-btn-small{ width:auto; flex:1; padding:9px 10px; font-size:11.5px; }
+
+  /* ---------- pantalla completa real cuando está instalada como app (iOS/Android) ---------- */
+  @media (display-mode: standalone), (display-mode: fullscreen){
+    body{ padding:0; background:var(--cream); align-items:stretch; justify-content:stretch; min-height:100vh; gap:0; }
+    .phone{ width:100vw; height:100vh; padding:0; border-radius:0; box-shadow:none; background:var(--cream); }
+    .phone::before{ display:none; }
+    .screen{ border-radius:0; height:100%; }
+    .statusbar{ display:none; }
+    .content{ padding-top:max(16px, env(safe-area-inset-top)); padding-bottom:max(6px, env(safe-area-inset-bottom)); }
+    .content.full-bleed{ padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
+    .navbar{ padding-bottom:max(10px, env(safe-area-inset-bottom)); }
+  }
+  @media (max-width: 480px){
+    body{ padding:0; background:var(--cream); align-items:stretch; justify-content:stretch; min-height:100vh; gap:0; }
+    .phone{ width:100vw; height:100vh; padding:0; border-radius:0; box-shadow:none; background:var(--cream); }
+    .phone::before{ display:none; }
+    .screen{ border-radius:0; height:100%; }
+    .statusbar{ display:none; }
+    .content{ padding-top:max(16px, env(safe-area-inset-top)); padding-bottom:max(6px, env(safe-area-inset-bottom)); }
+    .content.full-bleed{ padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
+    .navbar{ padding-bottom:max(10px, env(safe-area-inset-bottom)); }
+  }
 </style>
 </head>
 <body>
@@ -1312,6 +1339,11 @@ function render(screen){
 
 let remindersOn = false;
 
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* requiere estar hospedado con https */ });
+  });
+}
 go('hero');
 
 // Nota: el registro de service worker (instalación como PWA) no aplica
