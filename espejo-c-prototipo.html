@@ -856,6 +856,8 @@ const areasInfo = [
    template:'Quiero ser transparente: encontramos un detalle en la producción que vale la pena resolver bien antes de lanzar. Ajustamos el cronograma para entregar la próxima semana sin sacrificar calidad.'},
 ];
 let selectedArea = null;
+let progresoTab = 'linea';
+function setProgresoTab(t){ progresoTab = t; render('progreso'); }
 let areaAnswers = {};
 function toggleArea(i){ selectedArea = selectedArea === i ? null : i; render('areas'); }
 function useAreaTemplate(i){
@@ -1149,17 +1151,33 @@ function screenRegistrar(){
 }
 
 function screenProgreso(){
-  return `
-  <div class="section-title" style="margin-top:8px;">Mi evolución</div>
-  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Así ha sido tu camino hasta ahora.</p>
-  <div class="tabs">
-    <div class="tab active">Línea de tiempo</div>
-    <div class="tab">Estadísticas</div>
-  </div>
+  const timelineHTML = `
   <div class="timeline-item"><div class="dot" style="background:#DCE8F5;">${illus.book('#2B5A8C',16)}</div><div><div class="tl-date">MAY 2024</div><div class="tl-title">Reflexión sobre mis fortalezas</div></div></div>
   <div class="timeline-item"><div class="dot" style="background:#E4D9EC;">${illus.backpack('#5B3A85',16)}</div><div><div class="tl-date">ABR 2024</div><div class="tl-title">Mi mayor desafío del semestre</div></div></div>
   <div class="timeline-item"><div class="dot" style="background:#FBE7C4;">${illus.proyeccion('#B8860B',14)}</div><div><div class="tl-date">MAR 2024</div><div class="tl-title">¿Cómo quiero que me reconozcan?</div></div></div>
   <div class="timeline-item"><div class="dot" style="background:#D9E6F2;">${illus.comunicacion('#2B5A8C',16)}</div><div><div class="tl-date">FEB 2024</div><div class="tl-title">Expectativas sobre la carrera</div></div></div>`;
+  const statsHTML = `
+  <div class="card progress-card" style="margin-bottom:16px;">
+    <div class="ring" style="--pct:65"><div class="ring-inner"><b>65%</b><span>de tu camino</span></div></div>
+    <div style="flex:1;">
+      <div class="stat-row"><span>Preguntas respondidas</span><b>24</b></div>
+      <div class="stat-row"><span>Experiencias registradas</span><b>12</b></div>
+      <div class="stat-row"><span>Reflexiones guardadas</span><b>8</b></div>
+    </div>
+  </div>
+  ${[['Identidad',70,'#4EA8FF'],['Comunicación',60,'#2EC4B6'],['Profesión',35,'#8B5CF6'],['Proyección',40,'#FF4F81']].map(([label,pct,color])=>`
+    <div class="pill-row">
+      <span class="pill-row-label">${label}</span>
+      <div class="pill-track"><div class="pill-fill" style="width:${pct}%; background:${color};"><span>${pct}%</span></div></div>
+    </div>`).join('')}`;
+  return `
+  <div class="section-title" style="margin-top:8px;">Mi evolución</div>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Así ha sido tu camino hasta ahora.</p>
+  <div class="tabs">
+    <div class="tab ${progresoTab==='linea'?'active':''}" onclick="setProgresoTab('linea')">Línea de tiempo</div>
+    <div class="tab ${progresoTab==='stats'?'active':''}" onclick="setProgresoTab('stats')">Estadísticas</div>
+  </div>
+  ${progresoTab==='linea' ? timelineHTML : statsHTML}`;
 }
 
 function screenPerfil(){
