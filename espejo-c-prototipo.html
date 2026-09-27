@@ -272,15 +272,14 @@
   .pregunta-dia-label{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:11px; letter-spacing:.04em; color:#fff; opacity:.85; margin-bottom:6px; }
   .pregunta-dia-text{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:16px; color:#fff; line-height:1.35; margin-bottom:10px; }
   .pregunta-dia-link{ font-family:'Bricolage Grotesque'; font-weight:700; color:#fff; font-size:14px; cursor:pointer; }
-  .ruta-title{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:15px; color:var(--ink); margin:2px 0 18px; text-align:center; }
-  .ruta-path{ display:flex; flex-direction:column; align-items:center; }
-  .ruta-node-wrap{ display:flex; flex-direction:column; align-items:center; }
+  .ruta-title{ font-family:'Bricolage Grotesque'; font-weight:600; font-size:15px; color:var(--ink); margin:2px 0 6px; text-align:center; }
+  .ruta-path-wrap{ position:relative; width:100%; height:800px; margin:10px 0 6px; }
+  .ruta-path-svg{ position:absolute; top:0; left:0; width:100%; height:100%; }
+  .ruta-node-wrap{ position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; }
   .ruta-node{ width:64px; height:64px; border-radius:18px; border:3px solid var(--outline); display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.15); transition:transform .12s; }
   .ruta-node:active{ transform:scale(.9) translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.15); }
-  .ruta-label{ margin-top:8px; border:2px solid var(--outline); border-radius:999px; padding:4px 13px; font-family:'Bricolage Grotesque'; font-weight:600; font-size:12px; background:#fff; }
-  .ruta-connector{ width:4px; height:30px; background:repeating-linear-gradient(to bottom, var(--outline) 0 6px, transparent 6px 12px); margin:2px 0; }
-  .ruta-node-wrap{ position:relative; }
-  .new-tag{ position:absolute; top:-8px; right:-10px; background:#FF4F81; color:#fff; font-family:'Bricolage Grotesque'; font-weight:700; font-size:9px; padding:2px 6px; border-radius:999px; border:1.5px solid var(--outline); }
+  .ruta-label{ margin-top:8px; border:2px solid var(--outline); border-radius:999px; padding:4px 13px; font-family:'Bricolage Grotesque'; font-weight:600; font-size:12px; background:#fff; white-space:nowrap; }
+  .new-tag{ position:absolute; top:-8px; right:-14px; background:#FF4F81; color:#fff; font-family:'Bricolage Grotesque'; font-weight:700; font-size:9px; padding:2px 6px; border-radius:999px; border:1.5px solid var(--outline); }
 
   /* ---------- globo de conclusión junto al avatar ---------- */
   .avatar-bubble{
@@ -816,9 +815,45 @@ function renderCharacter(state, size, full){
 let qCategory = 'Identidad';
 let qIndex = 1;
 let feelChoice = 2;
-let streak = 1;
+let streak = 0;
 let stars = 0;
 let answeredCount = 0;
+let experienceCount = 0;
+let categoryAnswered = { Identidad:0, 'Comunicación':0, 'Profesión':0, 'Proyección':0 };
+
+function saveProgress(){
+  try{
+    localStorage.setItem('espejoC_progress', JSON.stringify({ streak, stars, answeredCount, experienceCount, categoryAnswered }));
+  }catch(e){ /* localStorage no disponible en esta vista previa */ }
+}
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem('espejoC_progress');
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(typeof data.streak === 'number') streak = data.streak;
+    if(typeof data.stars === 'number') stars = data.stars;
+    if(typeof data.answeredCount === 'number') answeredCount = data.answeredCount;
+    if(typeof data.experienceCount === 'number') experienceCount = data.experienceCount;
+    if(data.categoryAnswered) categoryAnswered = Object.assign(categoryAnswered, data.categoryAnswered);
+  }catch(e){ /* localStorage no disponible en esta vista previa */ }
+}
+function categoryTotal(cat){ return (questionBank[cat] || []).length; }
+function categoryPct(cat){
+  const total = categoryTotal(cat);
+  if(!total) return 0;
+  return Math.min(100, Math.round((categoryAnswered[cat] || 0) / total * 100));
+}
+function overallPct(){
+  const total = Object.keys(questionBank).reduce((sum,c)=>sum+categoryTotal(c), 0);
+  if(!total) return 0;
+  return Math.min(100, Math.round(answeredCount / total * 100));
+}
+function guardarExperiencia(){
+  experienceCount++;
+  saveProgress();
+  go('progreso');
+}
 
 const rutaNodes = [
   {label:'Conócete', cat:'Identidad', icon:illus.identidad('#3D2645',26), color:'#FFD34D'},
@@ -1014,23 +1049,28 @@ function screenHome(){
     <div class="pregunta-dia-link" onclick="qCategory='Comunicación'; qIndex=1; go('pregunta')">Responder ›</div>
   </div>
   <div class="ruta-title">Tu ruta</div>
-  <div class="ruta-path">
-    ${rutaNodes.map((n,i)=>`
-      <div class="ruta-node-wrap">
+  <div class="ruta-path-wrap">
+    <svg class="ruta-path-svg" viewBox="0 0 100 800" preserveAspectRatio="none">
+      <polyline points="25,80 75,240 25,400 75,560 50,720" fill="none" stroke="#1B1B1F" stroke-width="1.6" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>
+    </svg>
+    ${rutaNodes.map((n,i)=>{
+      const xs = [25,75,25,75,50];
+      const ys = [80,240,400,560,720];
+      return `
+      <div class="ruta-node-wrap" style="left:${xs[i]}%; top:${ys[i]}px;">
         ${n.cat==='areas' ? '<span class="new-tag">¡Nuevo!</span>' : ''}
         <div class="ruta-node" style="background:${n.color}" onclick="${n.cat==='areas' ? "go('areas')" : `qCategory='${n.cat}'; qIndex=1; go('pregunta')`}">${n.icon}</div>
         <div class="ruta-label">${n.label}</div>
-      </div>
-      ${i < rutaNodes.length-1 ? '<div class="ruta-connector"></div>' : ''}
-    `).join('')}
+      </div>`;
+    }).join('')}
   </div>
   <div class="section-title" style="margin-top:26px;">Tu progreso</div>
   <div class="card progress-card">
-    <div class="ring" style="--pct:65"><div class="ring-inner"><b>65%</b><span>de tu camino</span></div></div>
+    <div class="ring" style="--pct:${overallPct()}"><div class="ring-inner"><b>${overallPct()}%</b><span>de tu camino</span></div></div>
     <div style="flex:1;">
-      <div class="stat-row"><span>Preguntas respondidas</span><b>24</b></div>
-      <div class="stat-row"><span>Experiencias registradas</span><b>12</b></div>
-      <div class="stat-row"><span>Reflexiones guardadas</span><b>8</b></div>
+      <div class="stat-row"><span>Preguntas respondidas</span><b>${answeredCount}</b></div>
+      <div class="stat-row"><span>Experiencias registradas</span><b>${experienceCount}</b></div>
+      <div class="stat-row"><span>Reflexiones guardadas</span><b>${experienceCount}</b></div>
     </div>
   </div>
   <div class="section-title">Resumen de tu semana</div>
@@ -1130,8 +1170,11 @@ function confetti(){
 function nextQuestion(){
   const list = questionBank[qCategory];
   answeredCount++;
+  categoryAnswered[qCategory] = (categoryAnswered[qCategory] || 0) + 1;
+  if(streak === 0) streak = 1;
+  saveProgress();
   if(qIndex < list.length){ qIndex++; render('pregunta'); }
-  else { stars++; confetti(); go('progreso'); }
+  else { stars++; saveProgress(); confetti(); go('progreso'); }
 }
 
 function screenRegistrar(){
@@ -1149,29 +1192,38 @@ function screenRegistrar(){
   </div>
   <label>Fecha</label>
   <input type="date" value="2024-05-20">
-  <div style="margin-top:18px;"><button class="btn-primary" onclick="go('progreso')">Guardar experiencia</button></div>`;
+  <div style="margin-top:18px;"><button class="btn-primary" onclick="guardarExperiencia()">Guardar experiencia</button></div>`;
 }
 
 function screenProgreso(){
-  const timelineHTML = `
+  const hasActivity = (answeredCount + experienceCount) > 0;
+  const timelineHTML = hasActivity ? `
   <div class="timeline-item"><div class="dot" style="background:#DCE8F5;">${illus.book('#2B5A8C',16)}</div><div><div class="tl-date">MAY 2024</div><div class="tl-title">Reflexión sobre mis fortalezas</div></div></div>
   <div class="timeline-item"><div class="dot" style="background:#E4D9EC;">${illus.backpack('#5B3A85',16)}</div><div><div class="tl-date">ABR 2024</div><div class="tl-title">Mi mayor desafío del semestre</div></div></div>
   <div class="timeline-item"><div class="dot" style="background:#FBE7C4;">${illus.proyeccion('#B8860B',14)}</div><div><div class="tl-date">MAR 2024</div><div class="tl-title">¿Cómo quiero que me reconozcan?</div></div></div>
-  <div class="timeline-item"><div class="dot" style="background:#D9E6F2;">${illus.comunicacion('#2B5A8C',16)}</div><div><div class="tl-date">FEB 2024</div><div class="tl-title">Expectativas sobre la carrera</div></div></div>`;
+  <div class="timeline-item"><div class="dot" style="background:#D9E6F2;">${illus.comunicacion('#2B5A8C',16)}</div><div><div class="tl-date">FEB 2024</div><div class="tl-title">Expectativas sobre la carrera</div></div></div>` : `
+  <div style="text-align:center; padding:50px 16px; color:var(--ink-soft);">
+    <p style="font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:6px;">Aún no tienes registros</p>
+    <p style="font-size:12.5px; line-height:1.5;">Responde tu primera pregunta o registra una experiencia para empezar tu línea de tiempo.</p>
+  </div>`;
   const statsHTML = `
   <div class="card progress-card" style="margin-bottom:16px;">
-    <div class="ring" style="--pct:65"><div class="ring-inner"><b>65%</b><span>de tu camino</span></div></div>
+    <div class="ring" style="--pct:${overallPct()}"><div class="ring-inner"><b>${overallPct()}%</b><span>de tu camino</span></div></div>
     <div style="flex:1;">
-      <div class="stat-row"><span>Preguntas respondidas</span><b>24</b></div>
-      <div class="stat-row"><span>Experiencias registradas</span><b>12</b></div>
-      <div class="stat-row"><span>Reflexiones guardadas</span><b>8</b></div>
+      <div class="stat-row"><span>Preguntas respondidas</span><b>${answeredCount}</b></div>
+      <div class="stat-row"><span>Experiencias registradas</span><b>${experienceCount}</b></div>
+      <div class="stat-row"><span>Reflexiones guardadas</span><b>${experienceCount}</b></div>
     </div>
   </div>
-  ${[['Identidad',70,'#4EA8FF'],['Comunicación',60,'#2EC4B6'],['Profesión',35,'#8B5CF6'],['Proyección',40,'#FF4F81']].map(([label,pct,color])=>`
+  ${['Identidad','Comunicación','Profesión','Proyección'].map((label,i)=>{
+    const color = ['#4EA8FF','#2EC4B6','#8B5CF6','#FF4F81'][i];
+    const pct = categoryPct(label);
+    return `
     <div class="pill-row">
       <span class="pill-row-label">${label}</span>
       <div class="pill-track"><div class="pill-fill" style="width:${pct}%; background:${color};"><span>${pct}%</span></div></div>
-    </div>`).join('')}`;
+    </div>`;
+  }).join('')}`;
   return `
   <div class="section-title" style="margin-top:8px;">Mi evolución</div>
   <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Así ha sido tu camino hasta ahora.</p>
@@ -1193,13 +1245,13 @@ function screenPerfil(){
     <div class="blob-card" style="background:#8B5CF6;" onclick="go('explorar')">
       <div class="blob-refresh">↻</div>
       <div class="blob-mascot">${illus.mascot('rgba(255,255,255,.4)',78)}</div>
-      <div class="blob-value">24</div>
+      <div class="blob-value">${answeredCount}</div>
       <div class="blob-label">Preguntas<br>respondidas</div>
     </div>
     <div class="blob-card" style="background:#FF4F81;" onclick="go('registrar')">
       <div class="blob-refresh">↻</div>
       <div class="blob-mascot">${illus.mascot('rgba(255,255,255,.4)',78)}</div>
-      <div class="blob-value">12</div>
+      <div class="blob-value">${experienceCount}</div>
       <div class="blob-label">Experiencias<br>registradas</div>
     </div>
   </div>
@@ -1207,11 +1259,15 @@ function screenPerfil(){
     <div class="section-title" style="margin:0;">Progreso</div>
     <span style="font-size:11.5px; font-weight:700; color:var(--navy); cursor:pointer;" onclick="go('insights')">Ver todo</span>
   </div>
-  ${[['Identidad',70,'#4EA8FF'],['Comunicación',60,'#2EC4B6'],['Profesión',35,'#8B5CF6'],['Proyección',40,'#FF4F81']].map(([label,pct,color])=>`
+  ${['Identidad','Comunicación','Profesión','Proyección'].map((label,i)=>{
+    const color = ['#4EA8FF','#2EC4B6','#8B5CF6','#FF4F81'][i];
+    const pct = categoryPct(label);
+    return `
     <div class="pill-row">
       <span class="pill-row-label">${label}</span>
       <div class="pill-track"><div class="pill-fill" style="width:${pct}%; background:${color};"><span>${pct}%</span></div></div>
-    </div>`).join('')}
+    </div>`;
+  }).join('')}
   <div class="card id-card" style="margin-top:16px; --accent:#4EA8FF; cursor:pointer;" onclick="togglePerfilCard('fortalezas')"><div><h4>Fortalezas</h4><p>Creativa, empática, organizada${perfilExpanded.fortalezas ? '<br><br>Son cualidades que ya se notan en cómo abordas tus proyectos y en cómo te relacionas con tu equipo.' : ''}</p></div><div class="link-edit">${perfilExpanded.fortalezas ? 'Ver menos' : 'Ver más'}</div></div>
   <div class="card id-card" style="margin-top:10px; --accent:#2EC4B6; cursor:pointer;" onclick="togglePerfilCard('intereses')"><div><h4>Intereses</h4><p>Diseño, publicidad, moda, fotografía${perfilExpanded.intereses ? '<br><br>Aparecen una y otra vez en tus respuestas — son las áreas donde tu curiosidad se enciende sola.' : ''}</p></div><div class="link-edit">${perfilExpanded.intereses ? 'Ver menos' : 'Ver más'}</div></div>
   <div class="card id-card" style="margin-top:10px; --accent:#8B5CF6;"><div><h4>Mi propósito</h4><p>Inspirar a otros a comunicar con propósito.</p></div><div class="link-edit" onclick="go('insights')">Editar</div></div>
@@ -1222,34 +1278,28 @@ function screenPerfil(){
 }
 
 function screenInsights(){
-  const vals = [40,65,55,80,60];
+  const totalActivity = answeredCount + experienceCount;
+  const vals = [0.35,0.5,0.68,0.85,1].map(f=>Math.max(6, Math.round(f * Math.min(100, totalActivity*10))));
   return `
   <div class="section-title" style="margin-top:8px;">Insights</div>
   <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">Descubre patrones en tu proceso.</p>
   <div class="card">
     <div style="font-size:12.5px; font-weight:700; color:var(--navy);">Crecimiento personal</div>
-    <div style="font-size:11px; color:var(--ink-soft); margin:4px 0 8px;">Has registrado 8 reflexiones en los últimos 3 meses.</div>
+    <div style="font-size:11px; color:var(--ink-soft); margin:4px 0 8px;">${experienceCount>0 ? `Has registrado ${experienceCount} experiencia(s) hasta ahora.` : 'Aún no has registrado experiencias — empieza cuando quieras.'}</div>
     <div class="bars">
       ${vals.map(v=>`<div style="height:${v}%; background:var(--navy);"></div>`).join('')}
     </div>
     <div class="bar-legend"><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span></div>
   </div>
+  ${['Identidad','Comunicación','Profesión','Proyección'].map((label,i)=>{
+    const color = ['#4EA8FF','#2EC4B6','#8B5CF6','#FF4F81'][i];
+    const pct = categoryPct(label);
+    return `
   <div class="metric-row">
-    <div class="metric-label"><span>Identidad</span><b>70%</b></div>
-    <div class="metric-track"><div class="metric-fill" style="width:70%; background:#4EA8FF;"></div></div>
-  </div>
-  <div class="metric-row">
-    <div class="metric-label"><span>Comunicación</span><b>60%</b></div>
-    <div class="metric-track"><div class="metric-fill" style="width:60%; background:#2EC4B6;"></div></div>
-  </div>
-  <div class="metric-row">
-    <div class="metric-label"><span>Profesión</span><b>35%</b></div>
-    <div class="metric-track"><div class="metric-fill" style="width:35%; background:#8B5CF6;"></div></div>
-  </div>
-  <div class="metric-row">
-    <div class="metric-label"><span>Proyección</span><b>40%</b></div>
-    <div class="metric-track"><div class="metric-fill" style="width:40%; background:#FF4F81;"></div></div>
-  </div>
+    <div class="metric-label"><span>${label}</span><b>${pct}%</b></div>
+    <div class="metric-track"><div class="metric-fill" style="width:${pct}%; background:${color};"></div></div>
+  </div>`;
+  }).join('')}
   <div class="quote-card"><b>"No se trata de tenerlo todo claro, sino de seguir construyéndote."</b><br>Sigue reflejando tu mejor versión ✨</div>`;
 }
 
@@ -1364,6 +1414,7 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{ /* requiere estar hospedado con https */ });
   });
 }
+loadProgress();
 go('hero');
 
 // Nota: el registro de service worker (instalación como PWA) no aplica
