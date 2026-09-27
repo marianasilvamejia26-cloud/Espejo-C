@@ -159,7 +159,7 @@
     display:flex; align-items:center; justify-content:center;
   }
   .ring-inner{ width:56px; height:56px; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;}
-  .ring-inner b{font-size:15px; color:var(--navy);}
+  .ring-inner .pct-value{font-size:15px; color:var(--navy); font-weight:700;}
   .ring-inner span{font-size:8.5px; color:var(--ink-soft);}
   .stat-row{ display:flex; justify-content:space-between; font-size:12px; margin-top:6px;}
   .stat-row b{color:var(--navy); font-size:14px;}
@@ -860,7 +860,7 @@ const rutaNodes = [
   {label:'Comunícate', cat:'Comunicación', icon:illus.comunicacion('#3D2645',26), color:'#7CC1F2'},
   {label:'Proyéctate', cat:'Profesión', icon:illus.profesion('#3D2645',26), color:'#C9A6EA'},
   {label:'Destácate', cat:'Proyección', icon:illus.proyeccion('#3D2645',24), color:'#F0847A'},
-  {label:'Explora áreas', cat:'areas', icon:illus.areas('#3D2645',26), color:'#7FD1AC'},
+  {label:'Oriéntate', cat:'areas', icon:illus.areas('#3D2645',26), color:'#7FD1AC'},
 ];
 
 const areasInfo = [
@@ -914,16 +914,16 @@ function copyAreaAnswer(i, btn){
 
 function weeklySummary(){
   if(answeredCount === 0){
-    return 'Aún no respondes preguntas esta semana. Empieza por "Conócete" para arrancar tu racha. 🔥';
+    return 'Aún no respondes preguntas esta semana. Empieza por "Conócete" para arrancar <b>tu</b> racha. 🔥';
   }
-  return `Esta semana respondiste ${answeredCount} pregunta(s) y ganaste ${stars} estrella(s). Vas construyendo tu identidad poco a poco. ✨`;
+  return `Esta semana respondiste ${answeredCount} pregunta(s) y ganaste ${stars} estrella(s). Vas construyendo <b>tu</b> identidad poco a poco. ✨`;
 }
 
 const questionBank = {
   Identidad: ['¿Quién eres cuando nadie te está evaluando?', '¿Qué valores son fundamentales para ti como persona y como futura profesional?', '¿Qué te hace diferente de otros comunicadores?', '¿Qué historia te gustaría que contaran sobre ti?', '¿Qué parte de ti no quieres perder al graduarte?'],
   Comunicación: ['¿Cómo te describirías en una conversación con un cliente?', '¿Qué tono usas cuando presentas una idea?', '¿Qué canal te representa mejor: escrito, visual o hablado?'],
   Profesión: ['¿Qué quieres lograr como profesional en 5 años?', '¿Qué tipo de proyectos te emocionan más?'],
-  Proyección: ['¿Cómo quieres que te reconozcan en la industria?', '¿Qué quieres que la gente piense al ver tu trabajo?'],
+  Proyección: ['¿Cómo quieres que te reconozcan en la industria?', '¿Qué quieres que la gente piense al ver <b>tu</b> trabajo?'],
 };
 
 let currentScreen = 'onboarding';
@@ -950,7 +950,7 @@ function screenHero(){
       <div class="morph-char m4">${renderBlob('leo','currentColor',110)}</div>
     </div>
     <div class="hero-video-brand">Espejo C</div>
-    <p class="hero-video-tag">Tu proceso, tu identidad, tu proyección.</p>
+    <p class="hero-video-tag"><b>Tu</b> proceso, <b>tu</b> identidad, <b>tu</b> proyección.</p>
     <div class="hero-bottom">
       <button class="btn-dark-pill" onclick="go('onboarding')">Comenzar</button>
       <div class="hero-link" onclick="go('home')">Ya tengo cuenta</div>
@@ -964,8 +964,8 @@ function screenOnboarding(){
     <div class="onboard-top">
       <div class="onboard-brand">Espejo C ✦</div>
       <div class="onboard-illustration-wrap">${illus.mascot('#fff',72)}</div>
-      <div class="onboard-step-title">Personaliza tu pantalla</div>
-      <p class="onboard-step-sub">Elige el color con el que quieres vivir tu Espejo C.</p>
+      <div class="onboard-step-title">Personaliza <b>tu</b> pantalla</div>
+      <p class="onboard-step-sub">Elige el color con el que quieres vivir <b>tu</b> Espejo C.</p>
       <div class="onboard-swatch-row">
         ${themeColors.map(c=>`
           <div class="onboard-swatch" style="background:${c.hex}; border:3px solid ${theme===c.hex?'#fff':'rgba(255,255,255,.35)'};" onclick="setTheme('${c.hex}')">
@@ -1007,7 +1007,7 @@ function screenAvatarSetup(){
         <div class="${avatarState.type==='animal'?'active':''}" onclick="setAvatar('type','animal'); render('avatarSetup')">Animal</div>
         <div class="${avatarState.type==='mascota'?'active':''}" onclick="setAvatar('type','mascota'); render('avatarSetup')">Mascota</div>
       </div>
-      <div class="setup-title">Personaliza<br>tu avatar</div>
+      <div class="setup-title">Personaliza<br><b>tu</b> avatar</div>
       <div class="big-avatar-preview">${renderCharacter(avatarState, 130, true)}</div>
       ${avatarState.type==='mascota' ? `<div class="color-dot-row">${blobColors.map(c=>`<div class="color-dot ${avatarState.mascotColor===c?'selected':''}" style="background:${c}" onclick="setAvatar('mascotColor','${c}'); render('avatarSetup')"></div>`).join('')}</div>` : ''}
       <div class="preset-row">${gallery}</div>
@@ -1017,7 +1017,7 @@ function screenAvatarSetup(){
 }
 
 function shortWeeklyLine(){
-  if(answeredCount === 0) return '¡Empieza tu racha hoy! 🔥 Aún no registras nada esta semana.';
+  if(answeredCount === 0) return '¡Empieza <b>tu</b> racha hoy! 🔥 Aún no registras nada esta semana.';
   return `¡Llevas ${answeredCount} respuesta(s) y ${stars} estrella(s) esta semana! 🎉`;
 }
 
@@ -1042,13 +1042,13 @@ function screenHome(){
     <div class="greeting-date" style="color:rgba(255,255,255,.85);">${dateStr}</div>
   </div>
   <div class="brand-big">Espejo C</div>
-  <p class="brand-tag">Tu experiencia para conocerte y construir tu marca personal, semestre a semestre.</p>
+  <p class="brand-tag"><b>Tu</b> experiencia para conocerte y construir <b>tu</b> marca personal, semestre a semestre.</p>
   <div class="pregunta-dia-card" style="position:relative;">
     <div style="position:absolute; top:-16px; right:16px;">${illus.mascot('#fff',34)}</div>    <div class="pregunta-dia-label">PREGUNTA DEL DÍA</div>
     <div class="pregunta-dia-text">¿Qué aprendiste esta semana sobre cómo te comunicas?</div>
     <div class="pregunta-dia-link" onclick="qCategory='Comunicación'; qIndex=1; go('pregunta')">Responder ›</div>
   </div>
-  <div class="ruta-title">Tu ruta</div>
+  <div class="ruta-title"><b>Tu</b> ruta</div>
   <div class="ruta-path-wrap">
     <svg class="ruta-path-svg" viewBox="0 0 100 800" preserveAspectRatio="none">
       <polyline points="25,80 75,240 25,400 75,560 50,720" fill="none" stroke="#1B1B1F" stroke-width="1.6" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>
@@ -1058,22 +1058,21 @@ function screenHome(){
       const ys = [80,240,400,560,720];
       return `
       <div class="ruta-node-wrap" style="left:${xs[i]}%; top:${ys[i]}px;">
-        ${n.cat==='areas' ? '<span class="new-tag">¡Nuevo!</span>' : ''}
         <div class="ruta-node" style="background:${n.color}" onclick="${n.cat==='areas' ? "go('areas')" : `qCategory='${n.cat}'; qIndex=1; go('pregunta')`}">${n.icon}</div>
         <div class="ruta-label">${n.label}</div>
       </div>`;
     }).join('')}
   </div>
-  <div class="section-title" style="margin-top:26px;">Tu progreso</div>
+  <div class="section-title" style="margin-top:26px;"><b>Tu</b> progreso</div>
   <div class="card progress-card">
-    <div class="ring" style="--pct:${overallPct()}"><div class="ring-inner"><b>${overallPct()}%</b><span>de tu camino</span></div></div>
+    <div class="ring" style="--pct:${overallPct()}"><div class="ring-inner"><span class="pct-value">${overallPct()}%</span><span>de <b>tu</b> camino</span></div></div>
     <div style="flex:1;">
       <div class="stat-row"><span>Preguntas respondidas</span><b>${answeredCount}</b></div>
       <div class="stat-row"><span>Experiencias registradas</span><b>${experienceCount}</b></div>
       <div class="stat-row"><span>Reflexiones guardadas</span><b>${experienceCount}</b></div>
     </div>
   </div>
-  <div class="section-title">Resumen de tu semana</div>
+  <div class="section-title">Resumen de <b>tu</b> semana</div>
   <div class="card" style="font-size:12.5px; color:var(--ink-soft); line-height:1.5;">${weeklySummary()}</div>
   <div class="section-title">Sigue explorando</div>
   <div class="quick-row">
@@ -1204,11 +1203,11 @@ function screenProgreso(){
   <div class="timeline-item"><div class="dot" style="background:#D9E6F2;">${illus.comunicacion('#2B5A8C',16)}</div><div><div class="tl-date">FEB 2024</div><div class="tl-title">Expectativas sobre la carrera</div></div></div>` : `
   <div style="text-align:center; padding:50px 16px; color:var(--ink-soft);">
     <p style="font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:6px;">Aún no tienes registros</p>
-    <p style="font-size:12.5px; line-height:1.5;">Responde tu primera pregunta o registra una experiencia para empezar tu línea de tiempo.</p>
+    <p style="font-size:12.5px; line-height:1.5;">Responde <b>tu</b> primera pregunta o registra una experiencia para empezar <b>tu</b> línea de tiempo.</p>
   </div>`;
   const statsHTML = `
   <div class="card progress-card" style="margin-bottom:16px;">
-    <div class="ring" style="--pct:${overallPct()}"><div class="ring-inner"><b>${overallPct()}%</b><span>de tu camino</span></div></div>
+    <div class="ring" style="--pct:${overallPct()}"><div class="ring-inner"><span class="pct-value">${overallPct()}%</span><span>de <b>tu</b> camino</span></div></div>
     <div style="flex:1;">
       <div class="stat-row"><span>Preguntas respondidas</span><b>${answeredCount}</b></div>
       <div class="stat-row"><span>Experiencias registradas</span><b>${experienceCount}</b></div>
@@ -1226,7 +1225,7 @@ function screenProgreso(){
   }).join('')}`;
   return `
   <div class="section-title" style="margin-top:8px;">Mi evolución</div>
-  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Así ha sido tu camino hasta ahora.</p>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Así ha sido <b>tu</b> camino hasta ahora.</p>
   <div class="tabs">
     <div class="tab ${progresoTab==='linea'?'active':''}" onclick="setProgresoTab('linea')">Línea de tiempo</div>
     <div class="tab ${progresoTab==='stats'?'active':''}" onclick="setProgresoTab('stats')">Estadísticas</div>
@@ -1268,11 +1267,11 @@ function screenPerfil(){
       <div class="pill-track"><div class="pill-fill" style="width:${pct}%; background:${color};"><span>${pct}%</span></div></div>
     </div>`;
   }).join('')}
-  <div class="card id-card" style="margin-top:16px; --accent:#4EA8FF; cursor:pointer;" onclick="togglePerfilCard('fortalezas')"><div><h4>Fortalezas</h4><p>Creativa, empática, organizada${perfilExpanded.fortalezas ? '<br><br>Son cualidades que ya se notan en cómo abordas tus proyectos y en cómo te relacionas con tu equipo.' : ''}</p></div><div class="link-edit">${perfilExpanded.fortalezas ? 'Ver menos' : 'Ver más'}</div></div>
-  <div class="card id-card" style="margin-top:10px; --accent:#2EC4B6; cursor:pointer;" onclick="togglePerfilCard('intereses')"><div><h4>Intereses</h4><p>Diseño, publicidad, moda, fotografía${perfilExpanded.intereses ? '<br><br>Aparecen una y otra vez en tus respuestas — son las áreas donde tu curiosidad se enciende sola.' : ''}</p></div><div class="link-edit">${perfilExpanded.intereses ? 'Ver menos' : 'Ver más'}</div></div>
+  <div class="card id-card" style="margin-top:16px; --accent:#4EA8FF; cursor:pointer;" onclick="togglePerfilCard('fortalezas')"><div><h4>Fortalezas</h4><p>Creativa, empática, organizada${perfilExpanded.fortalezas ? '<br><br>Son cualidades que ya se notan en cómo abordas tus proyectos y en cómo te relacionas con <b>tu</b> equipo.' : ''}</p></div><div class="link-edit">${perfilExpanded.fortalezas ? 'Ver menos' : 'Ver más'}</div></div>
+  <div class="card id-card" style="margin-top:10px; --accent:#2EC4B6; cursor:pointer;" onclick="togglePerfilCard('intereses')"><div><h4>Intereses</h4><p>Diseño, publicidad, moda, fotografía${perfilExpanded.intereses ? '<br><br>Aparecen una y otra vez en tus respuestas — son las áreas donde <b>tu</b> curiosidad se enciende sola.' : ''}</p></div><div class="link-edit">${perfilExpanded.intereses ? 'Ver menos' : 'Ver más'}</div></div>
   <div class="card id-card" style="margin-top:10px; --accent:#8B5CF6;"><div><h4>Mi propósito</h4><p>Inspirar a otros a comunicar con propósito.</p></div><div class="link-edit" onclick="go('insights')">Editar</div></div>
   <div class="card" style="margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
-    <div><h4 style="font-size:13px; color:var(--navy); margin-bottom:2px;">Recordatorios</h4><p style="font-size:11.5px; color:var(--ink-soft);">Un aviso de vez en cuando para hacer tu registro</p></div>
+    <div><h4 style="font-size:13px; color:var(--navy); margin-bottom:2px;">Recordatorios</h4><p style="font-size:11.5px; color:var(--ink-soft);">Un aviso de vez en cuando para hacer <b>tu</b> registro</p></div>
     <button class="btn-secondary" style="width:auto; padding:8px 14px; font-size:12px;" onclick="activarRecordatorios()">${remindersOn ? 'Activados ✓' : 'Activar'}</button>
   </div>`;
 }
@@ -1282,7 +1281,7 @@ function screenInsights(){
   const vals = [0.35,0.5,0.68,0.85,1].map(f=>Math.max(6, Math.round(f * Math.min(100, totalActivity*10))));
   return `
   <div class="section-title" style="margin-top:8px;">Insights</div>
-  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">Descubre patrones en tu proceso.</p>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">Descubre patrones en <b>tu</b> proceso.</p>
   <div class="card">
     <div style="font-size:12.5px; font-weight:700; color:var(--navy);">Crecimiento personal</div>
     <div style="font-size:11px; color:var(--ink-soft); margin:4px 0 8px;">${experienceCount>0 ? `Has registrado ${experienceCount} experiencia(s) hasta ahora.` : 'Aún no has registrado experiencias — empieza cuando quieras.'}</div>
@@ -1300,7 +1299,7 @@ function screenInsights(){
     <div class="metric-track"><div class="metric-fill" style="width:${pct}%; background:${color};"></div></div>
   </div>`;
   }).join('')}
-  <div class="quote-card"><b>"No se trata de tenerlo todo claro, sino de seguir construyéndote."</b><br>Sigue reflejando tu mejor versión ✨</div>`;
+  <div class="quote-card"><b>"No se trata de tenerlo todo claro, sino de seguir construyéndote."</b><br>Sigue reflejando <b>tu</b> mejor versión ✨</div>`;
 }
 
 function screenPersonalizar(){
@@ -1317,7 +1316,7 @@ function screenPersonalizar(){
 
 function temaTabHTML(){
   return `
-  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">Elige el color principal de tu app.</p>
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">Elige el color principal de <b>tu</b> app.</p>
   <div style="display:flex; flex-wrap:wrap; gap:14px;">
   ${themeColors.map(c=>`
     <div style="text-align:center;">
@@ -1350,7 +1349,7 @@ function avatarTabHTML(){
   </div>`;
 
   const animalPart = `
-  <label style="margin-top:2px;">Elige tu animalito</label>
+  <label style="margin-top:2px;">Elige <b>tu</b> animalito</label>
   <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px;">
   ${Object.keys(animalInfo).map(k=>`
     <div onclick="setAvatar('animalKind','${k}')" style="text-align:center; padding:8px 4px; border-radius:14px; border:2px solid ${avatarState.animalKind===k?'var(--navy)':'var(--line)'}; background:${avatarState.animalKind===k?'var(--panel)':'#fff'}; cursor:pointer;">
@@ -1360,11 +1359,11 @@ function avatarTabHTML(){
   </div>`;
 
   const mascotaPart = `
-  <label style="margin-top:2px;">Color de tu mascota</label>
+  <label style="margin-top:2px;">Color de <b>tu</b> mascota</label>
   <div style="display:flex; gap:10px; margin-bottom:14px;">
   ${blobColors.map(c=>`<div onclick="setAvatar('mascotColor','${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${avatarState.mascotColor===c?'var(--navy)':'var(--outline)'};"></div>`).join('')}
   </div>
-  <label style="margin-top:0;">Elige tu personaje</label>
+  <label style="margin-top:0;">Elige <b>tu</b> personaje</label>
   <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:4px;">
   ${Object.keys(blobInfo).map(k=>`
     <div onclick="setAvatar('mascotKind','${k}')" style="text-align:center; padding:8px 4px; border-radius:14px; border:2px solid ${avatarState.mascotKind===k?'var(--navy)':'var(--line)'}; background:${avatarState.mascotKind===k?'var(--panel)':'#fff'}; cursor:pointer;">
