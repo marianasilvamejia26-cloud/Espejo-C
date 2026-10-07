@@ -2,7 +2,7 @@
   "name": "Espejo C",
   "short_name": "Espejo C",
   "description": "Tu proceso. Tu identidad. Tu proyección.",
-  "start_url": "./espejo-c-prototipo.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FFFCF7",
   "theme_color": "#1E9E5A",
