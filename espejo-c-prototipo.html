@@ -201,6 +201,11 @@
   .emoji-row{ display:flex; gap:8px; }
   .emoji-btn{ flex:1; padding:10px 0; border-radius:12px; border:1px solid var(--line); background:#fff; text-align:center; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .emoji-btn.active{ border-color:var(--navy); background:var(--panel); }
+  .photo-upload-wrap{ margin-top:2px; }
+  .photo-add-btn{ display:flex; align-items:center; justify-content:center; width:100%; padding:16px 0; border-radius:12px; border:1.5px dashed var(--line); background:var(--panel); color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer; text-align:center; }
+  .photo-preview{ position:relative; width:100%; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
+  .photo-preview img{ width:100%; display:block; max-height:180px; object-fit:cover; }
+  .photo-remove-btn{ position:absolute; top:8px; right:8px; width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; }
 
   /* ---------- evolución ---------- */
   .tabs{ display:flex; gap:6px; background:var(--panel); border-radius:12px; padding:4px; margin-bottom:14px;}
@@ -487,6 +492,8 @@
   .area-textarea{ width:100%; min-height:70px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font-family:'Inter'; font-size:12.5px; color:var(--ink); resize:none; background:#fff; }
   .area-practice-actions{ display:flex; gap:8px; margin-top:10px; }
   .area-btn-small{ width:auto; flex:1; padding:9px 10px; font-size:11.5px; }
+  .glossary-term{ text-decoration:underline dotted var(--accent); text-decoration-thickness:1.5px; cursor:pointer; font-weight:700; color:var(--accent); }
+  .glossary-box{ margin-top:10px; background:var(--panel); border-radius:12px; padding:10px 12px; font-size:12px; color:var(--ink); line-height:1.5; }
 
   /* ---------- pantalla completa real cuando está instalada como app (iOS/Android) ---------- */
   @media (display-mode: standalone), (display-mode: fullscreen){
@@ -820,10 +827,29 @@ let stars = 0;
 let answeredCount = 0;
 let experienceCount = 0;
 let categoryAnswered = { Identidad:0, 'Comunicación':0, 'Profesión':0, 'Proyección':0 };
+let timelineLog = [];
+
+function todayISO(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+function formatLogDate(iso){
+  const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const parts = (iso||'').split('-');
+  if(parts.length < 2) return '';
+  const mi = parseInt(parts[1],10) - 1;
+  return `${meses[mi] || ''} ${parts[0]}`;
+}
+function addTimelineEntry(entry){
+  timelineLog.unshift(entry);
+  if(timelineLog.length > 30) timelineLog = timelineLog.slice(0,30);
+}
 
 function saveProgress(){
   try{
-    localStorage.setItem('espejoC_progress', JSON.stringify({ streak, stars, answeredCount, experienceCount, categoryAnswered }));
+    localStorage.setItem('espejoC_progress', JSON.stringify({ streak, stars, answeredCount, experienceCount, categoryAnswered, timelineLog }));
   }catch(e){ /* localStorage no disponible en esta vista previa */ }
 }
 function loadProgress(){
@@ -836,6 +862,7 @@ function loadProgress(){
     if(typeof data.answeredCount === 'number') answeredCount = data.answeredCount;
     if(typeof data.experienceCount === 'number') experienceCount = data.experienceCount;
     if(data.categoryAnswered) categoryAnswered = Object.assign(categoryAnswered, data.categoryAnswered);
+    if(Array.isArray(data.timelineLog)) timelineLog = data.timelineLog;
   }catch(e){ /* localStorage no disponible en esta vista previa */ }
 }
 function categoryTotal(cat){ return (questionBank[cat] || []).length; }
@@ -851,7 +878,18 @@ function overallPct(){
 }
 function guardarExperiencia(){
   experienceCount++;
+  addTimelineEntry({
+    type:'experiencia',
+    title: (registrarTitle||'').trim() || 'Experiencia registrada',
+    date: registrarFecha || todayISO(),
+    icon:'backpack'
+  });
   saveProgress();
+  registrarPhotoDataUrl = null;
+  registrarTitle = '';
+  registrarAprendizaje = '';
+  registrarFecha = todayISO();
+  feelChoice = 2;
   go('progreso');
 }
 
@@ -865,38 +903,60 @@ const rutaNodes = [
 
 const areasInfo = [
   {name:'Branding', color:'#4EA8FF', desc:'Construir la identidad y personalidad de una marca.',
-   example:'Creas la identidad visual y el tono de voz de una marca de café local, desde el logo hasta cómo le habla a sus clientes en redes.',
+   examples:[
+     'Creas la identidad visual y el tono de voz de una marca de café local, desde el logo hasta cómo le habla a sus clientes en redes.',
+     'Rediseñas el logo y los colores de una fundación para que su imagen transmita confianza y sea fácil de reconocer en cualquier parte.'],
    steps:['Investigar', 'Definir identidad', 'Aplicarla en todo punto de contacto'],
    prompt:'Piensa en una marca (real o inventada) y escribe su personalidad en una frase.',
    template:'Somos cercanos, curiosos y un poco irreverentes — hablamos como alguien de confianza, no como una empresa.'},
   {name:'Digital', color:'#2EC4B6', desc:'Estrategia y contenido para redes y plataformas online.',
-   example:'Diseñas el calendario de contenido de Instagram de una marca de ropa: qué publicar cada día y cómo medir qué tan bien funcionó.',
+   examples:[
+     'Diseñas el calendario de contenido de Instagram de una marca de ropa: qué publicar cada día y cómo medir qué tan bien funcionó.',
+     'Armas la campaña de lanzamiento de una app con creadores de contenido, eligiendo a quién sumar y qué mensaje darle a cada uno.'],
    steps:['Investigar audiencia', 'Planear contenido', 'Medir resultados'],
    prompt:'Escribe una idea de post para redes sociales de una marca que te guste.',
    template:'Carrusel de 3 slides mostrando el "antes y después" de usar el producto, con un CTA a comentar su propia experiencia.'},
   {name:'Medios', color:'#8B5CF6', desc:'Planificación y compra de espacios publicitarios.',
-   example:'Decides en qué canales —TV, redes, vallas— invertir el presupuesto de una campaña para que llegue al público correcto.',
+   examples:[
+     'Decides en qué canales —TV, redes, vallas— invertir el presupuesto de una campaña para que llegue al público correcto.',
+     'Negocias con un medio un mejor precio por pautar varias veces al año, para que el presupuesto del cliente rinda más.'],
    steps:['Definir público', 'Elegir canales', 'Repartir presupuesto'],
    prompt:'Si tuvieras $1000 para publicidad, ¿en qué canales los repartirías y por qué?',
    template:'40% Instagram Ads (público joven), 30% influencers locales, 30% pauta en Spotify — porque así llego a mi público en los momentos donde más atención presta.'},
   {name:'Creatividad', color:'#FF4F81', desc:'Ideación de conceptos y piezas creativas.',
-   example:'Ideas el concepto y el guion de un comercial para el lanzamiento de un nuevo producto.',
-   steps:['Encontrar el insight', 'Idear el concepto', 'Producir la pieza'],
+   examples:[
+     'Ideas el concepto y el guion de un comercial para el lanzamiento de un nuevo producto.',
+     'Escribes el texto de una valla publicitaria para una campaña de conciencia social, buscando que en pocas palabras genere impacto.'],
+   steps:['Encontrar el <span class="glossary-term" onclick="toggleGlossary(\'insight\')">insight</span>', 'Idear el concepto', 'Producir la pieza'],
    prompt:'Escribe un concepto creativo en una sola frase para el lanzamiento de un producto.',
    template:'"El café que te despierta antes de que suene la alarma" — un concepto que juega con la anticipación y la rutina matutina.'},
   {name:'Cuentas', color:'#FF8A3D', desc:'Gestión de la relación con el cliente y el proyecto.',
-   example:'Eres el puente entre el cliente y el equipo creativo, cuidando que el proyecto cumpla plazos y expectativas.',
+   examples:[
+     'Eres el puente entre el cliente y el equipo creativo, cuidando que el proyecto cumpla plazos y expectativas.',
+     'Preparas la presentación mensual de resultados para un cliente, explicando qué funcionó de la campaña y qué sigue.'],
    steps:['Entender al cliente', 'Coordinar al equipo', 'Entregar a tiempo'],
    prompt:'Describe cómo le explicarías a un cliente que su campaña se retrasó una semana.',
    template:'Quiero ser transparente: encontramos un detalle en la producción que vale la pena resolver bien antes de lanzar. Ajustamos el cronograma para entregar la próxima semana sin sacrificar calidad.'},
 ];
+
+const glossary = {
+  insight: '"Insight" es una verdad o motivación oculta de las personas —algo que sienten o piensan pero no dicen directamente— y que, al descubrirla, ayuda a crear una idea que conecta de verdad con ellas.',
+};
+let openGlossaryTerm = null;
+function toggleGlossary(term){ openGlossaryTerm = openGlossaryTerm === term ? null : term; render('areas'); }
 let selectedArea = null;
 let progresoTab = 'linea';
 function setProgresoTab(t){ progresoTab = t; render('progreso'); }
 let perfilExpanded = { fortalezas:false, intereses:false };
 function togglePerfilCard(key){ perfilExpanded[key] = !perfilExpanded[key]; render('perfil'); }
 let areaAnswers = {};
+let areaExampleIndex = {};
 function toggleArea(i){ selectedArea = selectedArea === i ? null : i; render('areas'); }
+function cycleExample(i){
+  const total = (areasInfo[i].examples || []).length;
+  areaExampleIndex[i] = ((areaExampleIndex[i] || 0) + 1) % total;
+  render('areas');
+}
 function useAreaTemplate(i){
   areaAnswers[i] = areasInfo[i].template;
   const ta = document.getElementById('areaInput'+i);
@@ -1085,8 +1145,12 @@ function screenAreas(){
   return `
   <div class="back-row"><div class="back-btn" onclick="go('home')">${icons.back}</div></div>
   <div class="section-title" style="margin-top:0;">Áreas de la comunicación publicitaria</div>
-  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Toca cada área para ver un ejemplo real de cómo se ve en la práctica.</p>
-  ${areasInfo.map((a,i)=>`
+  <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:4px;">Toca cada área para ver cómo se ve en la práctica. Cada una tiene un <b>ejemplo real</b>, los <b>pasos</b> que sigue y un espacio para que lo practiques tú.</p>
+  <p style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">¿Hay una palabra que no conoces? Si está subrayada, tócala y te la explicamos.</p>
+  ${areasInfo.map((a,i)=>{
+    const examples = a.examples || [a.example];
+    const idx = (areaExampleIndex[i] || 0) % examples.length;
+    return `
     <div class="area-card ${selectedArea===i?'open':''}" style="--accent:${a.color};" onclick="toggleArea(${i})">
       <div class="area-card-head">
         <h4>${a.name}</h4>
@@ -1095,11 +1159,13 @@ function screenAreas(){
       <p class="area-desc">${a.desc}</p>
       ${selectedArea===i ? `
         <div class="area-example" onclick="event.stopPropagation()">
-          <div class="area-example-label">EJEMPLO</div>
-          <p>${a.example}</p>
-          <div class="area-steps">
+          <div class="area-example-label">EJEMPLO ${examples.length>1?`(${idx+1}/${examples.length})`:''}</div>
+          <p>${examples[idx]}</p>
+          ${examples.length>1?`<button class="btn-secondary area-btn-small" style="margin-top:6px;" onclick="cycleExample(${i})">🔄 Ver otro ejemplo</button>`:''}
+          <div class="area-steps" style="margin-top:12px;">
             ${a.steps.map((s,j)=>`<span class="area-step">${j+1}. ${s}</span>${j<a.steps.length-1?'<span class="area-step-arrow">›</span>':''}`).join('')}
           </div>
+          ${openGlossaryTerm==='insight' && a.steps.some(s=>s.includes('glossary-term'))?`<div class="glossary-box">💡 <b>¿Qué es un insight?</b> ${glossary.insight}</div>`:''}
           <div class="area-example-label" style="margin-top:14px;">PRACTÍCALO TÚ</div>
           <p style="font-size:12.5px; color:var(--ink); line-height:1.5; margin-bottom:8px;">${a.prompt}</p>
           <textarea id="areaInput${i}" class="area-textarea" placeholder="Escribe tu respuesta aquí..." oninput="areaAnswers[${i}]=this.value">${areaAnswers[i]||''}</textarea>
@@ -1108,7 +1174,7 @@ function screenAreas(){
             <button class="btn-primary area-btn-small" onclick="copyAreaAnswer(${i}, this)">Copiar</button>
           </div>
         </div>` : ''}
-    </div>`).join('')}`;
+    </div>`;}).join('')}`;
 }
 
 function screenExplorar(){
@@ -1166,41 +1232,81 @@ function confetti(){
   }
 }
 
+const categoryIcons = { Identidad:'identidad', 'Comunicación':'comunicacion', 'Profesión':'profesion', 'Proyección':'proyeccion' };
 function nextQuestion(){
   const list = questionBank[qCategory];
   answeredCount++;
   categoryAnswered[qCategory] = (categoryAnswered[qCategory] || 0) + 1;
+  addTimelineEntry({
+    type:'pregunta',
+    title: list[qIndex-1],
+    date: todayISO(),
+    category: qCategory,
+    icon: categoryIcons[qCategory] || 'book'
+  });
   if(streak === 0) streak = 1;
   saveProgress();
   if(qIndex < list.length){ qIndex++; render('pregunta'); }
   else { stars++; saveProgress(); confetti(); go('progreso'); }
 }
 
+let registrarPhotoDataUrl = null;
+let registrarTitle = '';
+let registrarAprendizaje = '';
+let registrarFecha = todayISO();
+function handlePhotoSelect(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    registrarPhotoDataUrl = e.target.result;
+    render('registrar');
+  };
+  reader.readAsDataURL(file);
+}
+function removePhoto(){
+  registrarPhotoDataUrl = null;
+  const input = document.getElementById('photoInput');
+  if(input) input.value = '';
+  render('registrar');
+}
 function screenRegistrar(){
   return `
   <div class="back-row"><div class="back-btn" onclick="go('home')">${icons.back}</div></div>
   <div class="section-title" style="margin-top:0;">Registrar experiencia</div>
-  <p style="font-size:12.5px; color:var(--ink-soft);">Guarda momentos, aprendizajes y logros importantes.</p>
+  <p style="font-size:12.5px; color:var(--ink-soft);">Guarda momentos, aprendizajes y logros importantes, como un diario personal.</p>
   <label>Título de la experiencia</label>
-  <input type="text" placeholder="Ej. Mi primer proyecto universitario">
+  <input type="text" id="registrarTitleInput" placeholder="Ej. Mi primer proyecto universitario" value="${registrarTitle.replace(/"/g,'&quot;')}" oninput="registrarTitle=this.value">
   <label>¿Qué fue lo más importante que aprendiste?</label>
-  <textarea style="min-height:80px;" placeholder="Escribe aquí..."></textarea>
+  <textarea id="registrarAprendizajeInput" style="min-height:80px;" placeholder="Escribe aquí..." oninput="registrarAprendizaje=this.value">${registrarAprendizaje}</textarea>
   <label>¿Cómo te hizo sentir?</label>
   <div class="emoji-row">
     ${[0,1,2,3,4].map(i=>`<div class="emoji-btn ${i===feelChoice?'active':''}" style="${i===feelChoice?'background:var(--navy); border-color:var(--navy);':''}" onclick="feelChoice=${i}; render('registrar')">${moodIcon(i, i===feelChoice)}</div>`).join('')}
   </div>
-  <label>Fecha</label>
-  <input type="date" value="2024-05-20">
+  <label>Fecha <span style="font-weight:400; color:var(--ink-soft);">(hoy por defecto, la puedes cambiar)</span></label>
+  <input type="date" id="registrarFechaInput" value="${registrarFecha}" oninput="registrarFecha=this.value">
+  <label>Foto del momento (opcional)</label>
+  <div class="photo-upload-wrap">
+    ${registrarPhotoDataUrl ? `
+      <div class="photo-preview">
+        <img src="${registrarPhotoDataUrl}" alt="Foto de la experiencia">
+        <div class="photo-remove-btn" onclick="removePhoto()">✕</div>
+      </div>` : `
+      <label class="photo-add-btn" for="photoInput">📷 Tomar o elegir foto</label>`}
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoSelect(event)">
+  </div>
   <div style="margin-top:18px;"><button class="btn-primary" onclick="guardarExperiencia()">Guardar experiencia</button></div>`;
 }
 
 function screenProgreso(){
   const hasActivity = (answeredCount + experienceCount) > 0;
-  const timelineHTML = hasActivity ? `
-  <div class="timeline-item"><div class="dot" style="background:#DCE8F5;">${illus.book('#2B5A8C',16)}</div><div><div class="tl-date">MAY 2024</div><div class="tl-title">Reflexión sobre mis fortalezas</div></div></div>
-  <div class="timeline-item"><div class="dot" style="background:#E4D9EC;">${illus.backpack('#5B3A85',16)}</div><div><div class="tl-date">ABR 2024</div><div class="tl-title">Mi mayor desafío del semestre</div></div></div>
-  <div class="timeline-item"><div class="dot" style="background:#FBE7C4;">${illus.proyeccion('#B8860B',14)}</div><div><div class="tl-date">MAR 2024</div><div class="tl-title">¿Cómo quiero que me reconozcan?</div></div></div>
-  <div class="timeline-item"><div class="dot" style="background:#D9E6F2;">${illus.comunicacion('#2B5A8C',16)}</div><div><div class="tl-date">FEB 2024</div><div class="tl-title">Expectativas sobre la carrera</div></div></div>` : `
+  const tlDots = { Identidad:['#FBE7C4','#B8860B'], 'Comunicación':['#D9E6F2','#2B5A8C'], 'Profesión':['#E4D9EC','#5B3A85'], 'Proyección':['#FDE1DD','#B8453C'], experiencia:['#DCE8F5','#2B5A8C'] };
+  const tlIconFns = { identidad:illus.identidad, comunicacion:illus.comunicacion, profesion:illus.profesion, proyeccion:illus.proyeccion, backpack:illus.backpack, book:illus.book };
+  const timelineHTML = hasActivity ? timelineLog.map(entry=>{
+    const colors = tlDots[entry.category] || tlDots.experiencia;
+    const iconFn = tlIconFns[entry.icon] || illus.book;
+    return `<div class="timeline-item"><div class="dot" style="background:${colors[0]};">${iconFn(colors[1],16)}</div><div><div class="tl-date">${formatLogDate(entry.date)}</div><div class="tl-title">${entry.title}</div></div></div>`;
+  }).join('') : `
   <div style="text-align:center; padding:50px 16px; color:var(--ink-soft);">
     <p style="font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:6px;">Aún no tienes registros</p>
     <p style="font-size:12.5px; line-height:1.5;">Responde <b>tu</b> primera pregunta o registra una experiencia para empezar <b>tu</b> línea de tiempo.</p>
