@@ -1,4 +1,4 @@
-const CACHE_NAME = 'espejo-c-v3';
+const CACHE_NAME = 'espejo-c-v4';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
