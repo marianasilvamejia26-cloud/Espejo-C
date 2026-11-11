@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Espejo C — Prototipo</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1E9E5A">
-<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2F6BFF">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Espejo C">
@@ -15,8 +15,8 @@
 <style>
   :root{
     --grad-start:#FFDE59;
-    --grad-end:#1E9E5A;
-    --navy:#1E9E5A;
+    --grad-end:#2F6BFF;
+    --navy:#2F6BFF;
     --navy-pair:#FFDE59;
     --maroon:#B33771;
     --outline:#1B1B1F;
@@ -230,13 +230,13 @@
     html, body{ height:auto !important; overflow:visible !important; background:#fff !important; }
     body > *:not(#printRoot){ display:none !important; }
     #printRoot{ display:block; font-family:'Quicksand', sans-serif; color:#222; font-size:11.5pt; line-height:1.5; padding:0; }
-    #printRoot h1{ font-family:'Bricolage Grotesque', sans-serif; font-size:22pt; color:#1E9E5A; margin:0 0 2pt; }
+    #printRoot h1{ font-family:'Bricolage Grotesque', sans-serif; font-size:22pt; color:#2F6BFF; margin:0 0 2pt; }
     #printRoot .pr-sub{ color:#666; font-size:10pt; margin:0 0 14pt; }
-    #printRoot h2{ font-family:'Bricolage Grotesque', sans-serif; font-size:13pt; margin:16pt 0 6pt; color:#1E9E5A; }
+    #printRoot h2{ font-family:'Bricolage Grotesque', sans-serif; font-size:13pt; margin:16pt 0 6pt; color:#2F6BFF; }
     #printRoot .pr-stats{ display:flex; gap:18pt; margin-bottom:6pt; }
     #printRoot .pr-stats div{ border:1px solid #cfe5d8; border-radius:8pt; padding:6pt 12pt; }
-    #printRoot .pr-stats b{ display:block; font-size:16pt; color:#1E9E5A; }
-    #printRoot .pr-entry{ border-left:3pt solid #1E9E5A; padding:2pt 0 2pt 10pt; margin:0 0 12pt; break-inside:avoid; page-break-inside:avoid; }
+    #printRoot .pr-stats b{ display:block; font-size:16pt; color:#2F6BFF; }
+    #printRoot .pr-entry{ border-left:3pt solid #2F6BFF; padding:2pt 0 2pt 10pt; margin:0 0 12pt; break-inside:avoid; page-break-inside:avoid; }
     #printRoot .pr-date{ font-size:9.5pt; color:#666; font-weight:600; }
     #printRoot .pr-title{ font-weight:700; font-size:12pt; }
     #printRoot .pr-note{ white-space:pre-wrap; word-break:break-word; margin-top:2pt; }
@@ -406,7 +406,7 @@
   /* ---------- hero de bienvenida (limpio, en pasos) ---------- */
   .hero-clean{
     min-height:100%; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;
-    padding:38px 26px 26px; background:linear-gradient(180deg, #FFDE59 0%, #6EE7B7 55%, #1E9E5A 100%);
+    padding:38px 26px 26px; background:linear-gradient(180deg, #FFDE59 0%, #8FB5FF 55%, #2F6BFF 100%);
   }
   .hero-clean-top{ display:flex; flex-direction:column; align-items:center; gap:8px; }
   .hero-clean-brand{ font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:20px; color:#1B1B1F; }
@@ -430,7 +430,7 @@
   .hero-full{
     min-height:100%; position:relative; overflow:hidden; box-sizing:border-box;
     display:flex; flex-direction:column; justify-content:space-between;
-    padding:0 22px 30px; background:linear-gradient(165deg, #FFF3B0 0%, #FFE59A 32%, #CDEEC8 68%, #8FD3A0 100%);
+    padding:0 22px 30px; background:linear-gradient(165deg, #FFF3B0 0%, #FFE59A 32%, #BBD0FF 68%, #8FB5FF 100%);
   }
   .sticker{ position:absolute; filter:drop-shadow(0 3px 4px rgba(0,0,0,.18)); }
   .tag-sticker{
@@ -450,7 +450,7 @@
   /* ---------- hero animado (personaje que se transforma) ---------- */
   .hero-video{
     min-height:100%; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:34px 26px 30px; background:linear-gradient(165deg, #FFF3B0 0%, #FFE59A 32%, #CDEEC8 68%, #8FD3A0 100%);
+    padding:34px 26px 30px; background:linear-gradient(165deg, #FFF3B0 0%, #FFE59A 32%, #BBD0FF 68%, #8FB5FF 100%);
   }
   .morph-stage{ position:relative; width:130px; height:130px; margin-bottom:18px; }
   .morph-char{
@@ -459,7 +459,7 @@
     opacity:0; animation: morphCycle 8s infinite;
     filter:drop-shadow(0 6px 8px rgba(0,0,0,.15));
   }
-  .morph-char.m1{ animation-delay:0s; color:#1E9E5A; }
+  .morph-char.m1{ animation-delay:0s; color:#2F6BFF; }
   .morph-char.m2{ animation-delay:2s; color:#FF4F81; }
   .morph-char.m3{ animation-delay:4s; color:#4EA8FF; }
   .morph-char.m4{ animation-delay:6s; color:#8B5CF6; }
@@ -615,9 +615,9 @@ function moodIcon(level, active){
 }
 
 // ---------------- personalización: tema y avatar ----------------
-let theme = '#1E9E5A';
+let theme = '#2F6BFF';
 const themeColors = [
-  {name:'Verde', hex:'#1E9E5A', pair:'#FFDE59'}, {name:'Coral', hex:'#FF4F81', pair:'#FF8A3D'}, {name:'Mandarina', hex:'#FF8A3D', pair:'#FFC93C'},
+  {name:'Azul', hex:'#2F6BFF', pair:'#FFDE59'}, {name:'Coral', hex:'#FF4F81', pair:'#FF8A3D'}, {name:'Mandarina', hex:'#FF8A3D', pair:'#FFC93C'},
   {name:'Menta', hex:'#2EC4B6', pair:'#4EA8FF'}, {name:'Uva', hex:'#8B5CF6', pair:'#FF4F81'}, {name:'Cielo', hex:'#4EA8FF', pair:'#8B5CF6'},
   {name:'Limón', hex:'#FFC93C', pair:'#FF8A3D'},
 ];
@@ -777,7 +777,7 @@ function renderAnimalFull(kind, size){
 }
 
 // ---------------- avatares tipo mascota (blobs con contorno grueso) ----------------
-const blobColors = ['#FFDE59','#1E9E5A','#4EA8FF','#FF4F81','#8B5CF6'];
+const blobColors = ['#FFDE59','#2F6BFF','#4EA8FF','#FF4F81','#8B5CF6'];
 const blobInfo = {
   trino:  'Trino',
   oli:    'Oli',
